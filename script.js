@@ -24,12 +24,10 @@ function animateColor() {
 animateColor();
 
 
-// 1. Входной звук с правильным расширением .mpeg
-const soundWhod = new Audio('sound/whod.mpeg');
+const soundWhod = new Audio('sound/whod.mp3');
 soundWhod.preload = 'auto';
 soundWhod.load();
 
-// 2. Предзагрузка массива звуков для клика
 const bupSounds = [
   new Audio('sound/bup1.mp3'),
   new Audio('sound/bup2.mp3'),
@@ -43,18 +41,15 @@ bupSounds.forEach(sound => {
 
 let currentBupIndex = 0;
 
-// 3. Функция чередования звуков
 function playNextBup() {
   const currentSound = bupSounds[currentBupIndex];
   
-  currentSound.currentTime = 0; // Сброс для мгновенного повторного воспроизведения
+  currentSound.currentTime = 0;
   currentSound.play().catch(err => console.log('Ошибка воспроизведения:', err));
 
-  // Переход к следующему звуку (по кругу: 0 -> 1 -> 2 -> 0)
   currentBupIndex = (currentBupIndex + 1) % bupSounds.length;
 }
 
-// 4. Воспроизведение входного звука при первом клике
 let hasPlayedEntrance = false;
 
 function playEntranceSound() {
@@ -67,7 +62,6 @@ function playEntranceSound() {
 
 document.addEventListener('click', playEntranceSound);
 
-// 5. Навешивание чередующегося звука на кнопки
 document.addEventListener('DOMContentLoaded', () => {
   const buttons = document.querySelectorAll('.btnbox .btn-card');
   
@@ -80,7 +74,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 window.addEventListener('load', () => {
   soundWhod.play().catch(() => {
-    // Если браузер заблокировал, сыграет при первом клике
     document.addEventListener('click', playEntranceSound);
   });
 });
