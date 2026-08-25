@@ -1,7 +1,7 @@
 const redText = document.getElementById('redtext');
 let progress = 0;
-let direction = 1; // 1 — темнеет, -1 — светлеет
-const speed = 0.008; // Скорость перелива
+let direction = 1;
+const speed = 0.008;
 
 function animateColor() {
   progress += speed * direction;
@@ -14,20 +14,30 @@ function animateColor() {
     direction = 1;
   }
 
-  // Интерполяция от 255 до 100
   const currentRed = Math.round(255 - progress * (255 - 100));
-  redText.style.color = `rgb(${currentRed}, 0, 0)`;
+  if (redText) {
+    redText.style.color = `rgb(${currentRed}, 0, 0)`;
+  }
 
   requestAnimationFrame(animateColor);
 }
 
 animateColor();
 
+// ==========================================
+// НАСТРОЙКА ЗВУКОВ И ГРОМКОСТИ
+// ==========================================
 
-const soundWhod = new Audio('sound/whod.mp3');
+// 1. Входной звук (исправлено расширение на .mpeg)
+const soundWhod = new Audio('sound/whod.mpeg');
 soundWhod.preload = 'auto';
+
+// ---> ВОТ ЗДЕСЬ НАСТРАИВАЕТСЯ ГРОМКОСТЬ ДЛЯ ВХОДНОГО ЗВУКА (0.5 = 50%) <---
+soundWhod.volume = 0.25;
+
 soundWhod.load();
 
+// 2. Звуки клика
 const bupSounds = [
   new Audio('sound/bup1.mp3'),
   new Audio('sound/bup2.mp3'),
@@ -36,6 +46,10 @@ const bupSounds = [
 
 bupSounds.forEach(sound => {
   sound.preload = 'auto';
+  
+  // ---> ВОТ ЗДЕСЬ НАСТРАИВАЕТСЯ ГРОМКОСТЬ ДЛЯ ЗВУКОВ КЛИКА (0.5 = 50%) <---
+  sound.volume = 0.5;
+  
   sound.load();
 });
 
@@ -50,6 +64,7 @@ function playNextBup() {
   currentBupIndex = (currentBupIndex + 1) % bupSounds.length;
 }
 
+// 3. Логика воспроизведения при входе
 let hasPlayedEntrance = false;
 
 function playEntranceSound() {
@@ -60,8 +75,17 @@ function playEntranceSound() {
   }
 }
 
-document.addEventListener('click', playEntranceSound);
+// Попытка автозапуска при загрузке страницы
+window.addEventListener('load', () => {
+  soundWhod.play().then(() => {
+    hasPlayedEntrance = true;
+  }).catch(() => {
+    // Если браузер заблокировал автоплей, ждем первого клика
+    document.addEventListener('click', playEntranceSound);
+  });
+});
 
+// 4. Привязка звука клика к кнопкам
 document.addEventListener('DOMContentLoaded', () => {
   const buttons = document.querySelectorAll('.btnbox .btn-card');
   
@@ -69,11 +93,5 @@ document.addEventListener('DOMContentLoaded', () => {
     button.addEventListener('click', () => {
       playNextBup();
     });
-  });
-});
-
-window.addEventListener('load', () => {
-  soundWhod.play().catch(() => {
-    document.addEventListener('click', playEntranceSound);
   });
 });
