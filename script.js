@@ -33,7 +33,7 @@ const soundWhod = new Audio('sound/whod.mpeg');
 soundWhod.preload = 'auto';
 
 // ---> ВОТ ЗДЕСЬ НАСТРАИВАЕТСЯ ГРОМКОСТЬ ДЛЯ ВХОДНОГО ЗВУКА (0.5 = 50%) <---
-soundWhod.volume = 0.25;
+soundWhod.volume = 0.4;
 
 soundWhod.load();
 
