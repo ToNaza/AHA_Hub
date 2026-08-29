@@ -94,6 +94,9 @@ function setupModalBehaviour() {
         openModal(profileModal);
       } else {
         openModal(regModal);
+        // Инициализируем виджет именно сейчас, когда модалка уже видима —
+        // иначе iframe не подгрузится внутри display:none контейнера
+        initTelegramWidget();
       }
     });
   }
@@ -248,6 +251,5 @@ function hideBanScreen() {
 document.addEventListener('DOMContentLoaded', () => {
   setupModalBehaviour();
   ensureBanScreenExists();
-  initTelegramWidget();
   refreshSession();
 });
