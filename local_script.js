@@ -115,15 +115,20 @@ function setupModalBehaviour() {
     });
   }
 
-  // Закрытие окна профиля только кликом ЗА его пределами
-  if (profileModal) {
-    profileModal.addEventListener('click', (e) => {
-      const box = profileModal.querySelector('.profile_box');
-      if (box && !box.contains(e.target)) {
-        closeModal(profileModal);
-      }
-    });
-  }
+  // Закрытие окна профиля кликом ЗА его пределами — слушаем клики на
+  // всём документе, чтобы не зависеть от того, как именно раскинута
+  // вёрстка модалки в CSS
+  document.addEventListener('click', (e) => {
+    if (!profileModal || profileModal.style.display !== 'flex') return;
+
+    const box = profileModal.querySelector('.profile_box');
+    const isClickInsideBox = box && box.contains(e.target);
+    const isClickOnTrigger = profTrigger && profTrigger.contains(e.target);
+
+    if (!isClickInsideBox && !isClickOnTrigger) {
+      closeModal(profileModal);
+    }
+  });
 }
 
 /* ---------- Отрисовка профиля ---------- */
