@@ -112,6 +112,7 @@ function setupModalBehaviour() {
       isAuthenticated = false;
       closeModal(profileModal);
       stopSessionPolling();
+      openModal(regModal);
     });
   }
 
@@ -141,6 +142,7 @@ function renderProfileFromLocalStorage() {
   const nameEl = document.getElementById('name');
   const usernameEl = document.getElementById('username');
   const avaEl = document.getElementById('ava');
+  const profTrigger = document.getElementById('prof');
 
   if (nameEl) {
     nameEl.textContent =
@@ -154,6 +156,9 @@ function renderProfileFromLocalStorage() {
   }
   if (avaEl) {
     avaEl.src = profile.photo_url;
+  }
+  if (profTrigger) {
+    profTrigger.src = profile.photo_url;
   }
 }
 
@@ -187,6 +192,7 @@ async function refreshSession() {
       isAuthenticated = false;
       hideBanScreen();
       stopSessionPolling();
+      openModal(document.getElementById('reg'));
     }
   } catch (err) {
     console.error('Не удалось проверить сессию:', err);
