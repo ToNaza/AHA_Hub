@@ -1,72 +1,71 @@
 const TELEGRAM_BOT_USERNAME = 'aha_helper_bot'; // без @
 
 let isAuthenticated = false;
-let pollTimer = null;
+let sessionPollTimer = null;
+let loginPollTimer = null;
+let loginPollAttempts = 0;
 
-/* ---------- Встраивание официального Telegram Login Widget ---------- */
-/* Виджет рендерится в #tg-widget-container с opacity: 0 и накладывается
-   поверх кастомной кнопки #entrance через CSS (см. index.html). Клик
-   визуально идёт по кастомной кнопке, а физически — по настоящему
-   виджету Telegram, что гарантированно работает (в отличие от
-   программного вызова Telegram.Login.auth()). */
+/* ---------- Вход через бота ---------- */
 
-function initTelegramWidget() {
-  const container = document.getElementById('tg-widget-container');
-  if (!container || container.dataset.initialized) return;
+async function startBotLogin() {
+  try {
+    const response = await fetch('/api/create-login-token', { method: 'POST' });
+    const { token } = await response.json();
 
-  const script = document.createElement('script');
-  script.async = true;
-  script.src = 'https://telegram.org/js/telegram-widget.js?22';
-  script.setAttribute('data-telegram-login', TELEGRAM_BOT_USERNAME);
-  script.setAttribute('data-size', 'large');
-  script.setAttribute('data-request-access', 'write');
-  script.setAttribute('data-onauth', 'onTelegramAuth(user)');
+    // Открываем диалог с ботом в самом Telegram — там пользователь
+    // просто жмёт "Start", никакого ввода номера телефона
+    window.open(`https://t.me/${TELEGRAM_BOT_USERNAME}?start=${token}`, '_blank');
 
-  container.appendChild(script);
-  container.dataset.initialized = 'true';
+    loginPollAttempts = 0;
+    if (loginPollTimer) clearInterval(loginPollTimer);
+    loginPollTimer = setInterval(() => checkLoginToken(token), 2000);
+  } catch (err) {
+    console.error('Не удалось начать вход:', err);
+    alert('Не удалось начать вход. Попробуйте ещё раз.');
+  }
 }
 
-// Telegram вызывает эту функцию по имени из iframe — должна быть глобальной
-window.onTelegramAuth = function (user) {
-  handleTelegramResponse(user);
-};
+async function checkLoginToken(token) {
+  loginPollAttempts += 1;
 
-async function handleTelegramResponse(telegramData) {
+  // Останавливаемся примерно через 2 минуты ожидания
+  if (loginPollAttempts > 60) {
+    clearInterval(loginPollTimer);
+    loginPollTimer = null;
+    return;
+  }
+
   try {
-    const response = await fetch('/api/telegram-auth', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(telegramData),
-    });
-
+    const response = await fetch(`/api/check-login-token?token=${token}`);
     const result = await response.json();
 
-    if (!response.ok) {
-      throw new Error(result.error || 'Ошибка авторизации');
-    }
+    if (result.status === 'confirmed') {
+      clearInterval(loginPollTimer);
+      loginPollTimer = null;
 
-    // Профильные данные (имя, юзернейм, фото) храним ТОЛЬКО локально —
-    // сервер их не хранит, только id/баланс/бан
-    localStorage.setItem(
-      'telegram_profile',
-      JSON.stringify({
-        first_name: telegramData.first_name || '',
-        last_name: telegramData.last_name || '',
-        username: telegramData.username || '',
-        photo_url: telegramData.photo_url || './media/profile.svg',
-        id: telegramData.id,
-      })
-    );
+      // Профильные данные храним ТОЛЬКО локально — сервер хранит
+      // только id/баланс/бан
+      localStorage.setItem(
+        'telegram_profile',
+        JSON.stringify({
+          first_name: result.profile.first_name || '',
+          last_name: result.profile.last_name || '',
+          username: result.profile.username || '',
+          photo_url: './media/profile.svg',
+          id: result.profile.id,
+        })
+      );
 
-    closeModal(document.getElementById('reg'));
-    await refreshSession();
-  } catch (err) {
-    console.error('Ошибка авторизации:', err);
-    if (err.message && err.message.includes('USER_BLOCKED')) {
+      closeModal(document.getElementById('reg'));
+      await refreshSession();
+    } else if (result.status === 'blocked') {
+      clearInterval(loginPollTimer);
+      loginPollTimer = null;
       showBanScreen();
-    } else {
-      alert('Не удалось войти. Попробуйте ещё раз.');
     }
+    // 'pending' и 'not_found' — просто продолжаем ждать
+  } catch (err) {
+    console.error('Ошибка проверки входа:', err);
   }
 }
 
@@ -94,16 +93,12 @@ function setupModalBehaviour() {
         openModal(profileModal);
       } else {
         openModal(regModal);
-        // Инициализируем виджет именно сейчас, когда модалка уже видима —
-        // иначе iframe не подгрузится внутри display:none контейнера
-        initTelegramWidget();
       }
     });
   }
 
   if (entranceBtn) {
-    // Клик теперь физически ловит невидимый Telegram-виджет поверх кнопки,
-    // отдельный обработчик здесь не нужен
+    entranceBtn.addEventListener('click', startBotLogin);
   }
 
   if (skipBtn) {
@@ -116,7 +111,7 @@ function setupModalBehaviour() {
       localStorage.removeItem('telegram_profile');
       isAuthenticated = false;
       closeModal(profileModal);
-      stopPolling();
+      stopSessionPolling();
     });
   }
 
@@ -182,11 +177,11 @@ async function refreshSession() {
         hideBanScreen();
       }
 
-      startPolling();
+      startSessionPolling();
     } else {
       isAuthenticated = false;
       hideBanScreen();
-      stopPolling();
+      stopSessionPolling();
     }
   } catch (err) {
     console.error('Не удалось проверить сессию:', err);
@@ -195,15 +190,15 @@ async function refreshSession() {
 
 // Опрашиваем сессию каждые 20 секунд — этого достаточно, чтобы бан
 // сработал почти сразу, без необходимости в realtime-инфраструктуре
-function startPolling() {
-  if (pollTimer) return;
-  pollTimer = setInterval(refreshSession, 20000);
+function startSessionPolling() {
+  if (sessionPollTimer) return;
+  sessionPollTimer = setInterval(refreshSession, 20000);
 }
 
-function stopPolling() {
-  if (pollTimer) {
-    clearInterval(pollTimer);
-    pollTimer = null;
+function stopSessionPolling() {
+  if (sessionPollTimer) {
+    clearInterval(sessionPollTimer);
+    sessionPollTimer = null;
   }
 }
 
