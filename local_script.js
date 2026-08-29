@@ -51,7 +51,7 @@ async function checkLoginToken(token) {
           first_name: result.profile.first_name || '',
           last_name: result.profile.last_name || '',
           username: result.profile.username || '',
-          photo_url: './media/profile.svg',
+          photo_url: result.profile.photo_url || './media/profile.svg',
           id: result.profile.id,
         })
       );

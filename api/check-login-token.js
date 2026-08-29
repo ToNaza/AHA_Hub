@@ -75,6 +75,7 @@ module.exports = async (req, res) => {
         first_name: tokenRow.first_name,
         last_name: tokenRow.last_name,
         username: tokenRow.username,
+        photo_url: tokenRow.photo_url,
       },
     });
   } catch (err) {

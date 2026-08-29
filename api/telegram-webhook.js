@@ -16,6 +16,56 @@ async function sendMessage(chatId, text) {
   });
 }
 
+async function fetchAndStoreAvatar(telegramId) {
+  try {
+    const photosRes = await fetch(
+      `https://api.telegram.org/bot${BOT_TOKEN}/getUserProfilePhotos?user_id=${telegramId}&limit=1`
+    );
+    const photosData = await photosRes.json();
+
+    const photos = photosData.result && photosData.result.photos;
+    if (!photos || photos.length === 0) return null;
+
+    // Берём самый большой размер из первого набора фото
+    const sizes = photos[0];
+    const largest = sizes[sizes.length - 1];
+
+    const fileRes = await fetch(
+      `https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${largest.file_id}`
+    );
+    const fileData = await fileRes.json();
+    const filePath = fileData.result && fileData.result.file_path;
+    if (!filePath) return null;
+
+    const downloadUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${filePath}`;
+    const imageRes = await fetch(downloadUrl);
+    const arrayBuffer = await imageRes.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    const storagePath = `${telegramId}.jpg`;
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(storagePath, buffer, {
+        contentType: 'image/jpeg',
+        upsert: true,
+      });
+
+    if (uploadError) {
+      console.error('Ошибка загрузки аватарки в Supabase:', uploadError);
+      return null;
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(storagePath);
+
+    return publicUrlData.publicUrl;
+  } catch (err) {
+    console.error('Ошибка получения аватарки из Telegram:', err);
+    return null;
+  }
+}
+
 module.exports = async (req, res) => {
   // Проверяем, что запрос реально пришёл от Telegram, а не от кого-то ещё
   const secretHeader = req.headers['x-telegram-bot-api-secret-token'];
@@ -58,6 +108,8 @@ module.exports = async (req, res) => {
       return;
     }
 
+    const avatarUrl = await fetchAndStoreAvatar(from.id);
+
     await supabase
       .from('login_tokens')
       .update({
@@ -66,6 +118,7 @@ module.exports = async (req, res) => {
         first_name: from.first_name || '',
         last_name: from.last_name || '',
         username: from.username || '',
+        photo_url: avatarUrl,
       })
       .eq('token', token);
 
