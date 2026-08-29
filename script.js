@@ -24,15 +24,9 @@ function animateColor() {
 
 animateColor();
 
-// ==========================================
-// НАСТРОЙКА ЗВУКОВ И ГРОМКОСТИ
-// ==========================================
-
-// 1. Входной звук (исправлено расширение на .mpeg)
 const soundWhod = new Audio('sound/whod.mpeg');
 soundWhod.preload = 'auto';
 
-// ---> ВОТ ЗДЕСЬ НАСТРАИВАЕТСЯ ГРОМКОСТЬ ДЛЯ ВХОДНОГО ЗВУКА (0.5 = 50%) <---
 soundWhod.volume = 0.4;
 
 soundWhod.load();
@@ -46,9 +40,8 @@ const bupSounds = [
 
 bupSounds.forEach(sound => {
   sound.preload = 'auto';
-  
-  // ---> ВОТ ЗДЕСЬ НАСТРАИВАЕТСЯ ГРОМКОСТЬ ДЛЯ ЗВУКОВ КЛИКА (0.5 = 50%) <---
-  sound.volume = 0.5;
+
+  sound.volume = 1;
   
   sound.load();
 });
@@ -64,34 +57,26 @@ function playNextBup() {
   currentBupIndex = (currentBupIndex + 1) % bupSounds.length;
 }
 
-// 3. Логика воспроизведения при входе
+
 let hasPlayedEntrance = false;
 
 function playEntranceSound() {
   if (!hasPlayedEntrance) {
-    soundWhod.play().catch(err => console.log('Autoplay blocked:', err));
-    hasPlayedEntrance = true;
-    document.removeEventListener('click', playEntranceSound);
+    soundWhod.play().then(() => {
+      hasPlayedEntrance = true;
+    }).catch(err => console.log('Autoplay blocked:', err));
   }
 }
 
-// Попытка автозапуска при загрузке страницы
 window.addEventListener('load', () => {
   soundWhod.play().then(() => {
     hasPlayedEntrance = true;
   }).catch(() => {
-    // Если браузер заблокировал автоплей, ждем первого клика
-    document.addEventListener('click', playEntranceSound);
-  });
-});
-
-// 4. Привязка звука клика к кнопкам
-document.addEventListener('DOMContentLoaded', () => {
-  const buttons = document.querySelectorAll('.btnbox .btn-card');
-  
-  buttons.forEach(button => {
-    button.addEventListener('click', () => {
-      playNextBup();
-    });
+    const events = ['click', 'pointerdown', 'keydown', 'touchstart', 'scroll'];
+    const handler = () => {
+      playEntranceSound();
+      events.forEach(e => document.removeEventListener(e, handler));
+    };
+    events.forEach(e => document.addEventListener(e, handler, { once: true }));
   });
 });

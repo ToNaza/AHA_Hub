@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="./script.js" defer></script>
+    <script src="./version.js" defer></script>
+    <script src="./local_script.js" defer></script>
     <link rel="icon" href="./media/ava.png">
     <link rel="stylesheet" href="./style.css">
 
@@ -14,11 +16,11 @@
     <body>
         <div id="box_shadow"></div>
 
-        <header> <p id="redtext" class="unnoficial">Unnoficial</p>   <div class="namebort">  <p class="p1">AHA Hub</p> <p class="p2">Animal Hospital Anomaly</p>  </div>    <img src="./media/profile.svg"/>    </header>
+        <header> <p id="redtext" class="unnoficial">Unnoficial</p>   <div class="namebort">  <p class="p1">AHA Hub</p> <p class="p2">Animal Hospital Anomaly</p>  </div>        </header>
 
         <main>  
             <div class="btnbox">
-                <a href="#" class="btn-card">
+                <a href="./rule/index.html" class="btn-card">
                     <img src="media/preview.png" class="card-bg" alt="">
                     <div class="card-content">
                         <img src="media/rule.svg" class="card-icon" alt="Rules">
@@ -56,10 +58,11 @@
             <div id="reg" class="reg">
                 <div class="reg_box">
                     <p>Зарегистрируйтесь или Войдите</p>
-                    <button>Ввойти через Tg</button>
+                    <button id="entrance">Ввойти через Tg</button>
                     <p class="privacy_note">
                     Нажмите на кнопку и подтвердите вход. Авторизация проходит в соответствии с <a href="https://telegram.org/privacy" target="_blank">политикой конфиденциальности тг</a>.
                     </p>
+                    <button style="height: 30px;" id="skip">Ввойти потом</button>
                 </div>
             </div>
 
@@ -75,6 +78,6 @@
 
         </main>
 
-        <footer>  <p>V - 0.0.5</p>  </footer>
+        <footer>   <p id="versionInfo"></p>  </footer>
     </body>
 </html>
