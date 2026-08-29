@@ -1,47 +1,35 @@
-const TELEGRAM_BOT_ID = '8811607046'; // числовой ID бота (до двоеточия в токене)
+const TELEGRAM_BOT_USERNAME = 'aha_helper_bot'; // без @
 
 let isAuthenticated = false;
 let pollTimer = null;
 
-/* ---------- Загрузка Telegram Login Widget скрипта ---------- */
+/* ---------- Встраивание официального Telegram Login Widget ---------- */
+/* Виджет рендерится в #tg-widget-container с opacity: 0 и накладывается
+   поверх кастомной кнопки #entrance через CSS (см. index.html). Клик
+   визуально идёт по кастомной кнопке, а физически — по настоящему
+   виджету Telegram, что гарантированно работает (в отличие от
+   программного вызова Telegram.Login.auth()). */
 
-function loadTelegramWidgetScript() {
-  return new Promise((resolve, reject) => {
-    if (window.Telegram && window.Telegram.Login) {
-      resolve();
-      return;
-    }
-    const script = document.createElement('script');
-    script.src = 'https://telegram.org/js/telegram-widget.js?22';
-    script.async = true;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error('Не удалось загрузить Telegram widget'));
-    document.head.appendChild(script);
-  });
+function initTelegramWidget() {
+  const container = document.getElementById('tg-widget-container');
+  if (!container || container.dataset.initialized) return;
+
+  const script = document.createElement('script');
+  script.async = true;
+  script.src = 'https://telegram.org/js/telegram-widget.js?22';
+  script.setAttribute('data-telegram-login', TELEGRAM_BOT_USERNAME);
+  script.setAttribute('data-size', 'large');
+  script.setAttribute('data-request-access', 'write');
+  script.setAttribute('data-onauth', 'onTelegramAuth(user)');
+
+  container.appendChild(script);
+  container.dataset.initialized = 'true';
 }
 
-/* ---------- Открытие Telegram-авторизации по клику на кастомную кнопку ---------- */
-
-async function startTelegramLogin() {
-  try {
-    await loadTelegramWidgetScript();
-  } catch (err) {
-    console.error(err);
-    alert('Не удалось загрузить Telegram. Проверьте интернет-соединение.');
-    return;
-  }
-
-  window.Telegram.Login.auth(
-    { bot_id: TELEGRAM_BOT_ID, request_access: true },
-    async (telegramData) => {
-      if (!telegramData) {
-        console.log('Пользователь закрыл окно авторизации Telegram');
-        return;
-      }
-      await handleTelegramResponse(telegramData);
-    }
-  );
-}
+// Telegram вызывает эту функцию по имени из iframe — должна быть глобальной
+window.onTelegramAuth = function (user) {
+  handleTelegramResponse(user);
+};
 
 async function handleTelegramResponse(telegramData) {
   try {
@@ -111,7 +99,8 @@ function setupModalBehaviour() {
   }
 
   if (entranceBtn) {
-    entranceBtn.addEventListener('click', startTelegramLogin);
+    // Клик теперь физически ловит невидимый Telegram-виджет поверх кнопки,
+    // отдельный обработчик здесь не нужен
   }
 
   if (skipBtn) {
@@ -259,5 +248,6 @@ function hideBanScreen() {
 document.addEventListener('DOMContentLoaded', () => {
   setupModalBehaviour();
   ensureBanScreenExists();
+  initTelegramWidget();
   refreshSession();
 });
