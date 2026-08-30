@@ -21,7 +21,14 @@ body{
     background-color: black;
     z-index: 9999;
 
-    display: none;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+}
+
+#box_shadow.active {
+    opacity: 1;
+    pointer-events: auto;
 }
 
 
