@@ -1,4 +1,4 @@
-var versionText = 'v 0.1.4';
+var versionText = 'v 0.1.5';
 
 function setVersionText() {
     var versionElement = document.getElementById('versionInfo');

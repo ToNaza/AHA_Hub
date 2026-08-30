@@ -80,3 +80,37 @@ window.addEventListener('load', () => {
     events.forEach(e => document.addEventListener(e, handler, { once: true }));
   });
 });
+
+document.addEventListener('DOMContentLoaded', () => {
+  const buttons = document.querySelectorAll('.btnbox .btn-card');
+  const boxShadow = document.getElementById('box_shadow');
+
+  buttons.forEach(button => {
+    button.addEventListener('click', (e) => {
+      playNextBup();
+
+      const href = button.getAttribute('href');
+
+      // Пустые ссылки ("#") никуда не ведут — просто звук клика, без перехода
+      if (!href || href === '#') return;
+
+      // Если пользователь хочет открыть в новой вкладке (Ctrl/Cmd/Shift+клик
+      // или средняя кнопка мыши) — не мешаем, пусть браузер откроет как обычно
+      if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) {
+        return;
+      }
+
+      e.preventDefault();
+
+      if (!boxShadow) {
+        window.location.href = href;
+        return;
+      }
+
+      boxShadow.classList.add('active');
+      boxShadow.addEventListener('transitionend', () => {
+        window.location.href = href;
+      }, { once: true });
+    });
+  });
+});

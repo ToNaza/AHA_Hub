@@ -1,0 +1,360 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body{
+    background-image: url('./media/hol.png');
+    background-color: rgba(0, 0, 0, 0.6);
+    background-blend-mode: multiply;
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover;
+    background-attachment: fixed;
+}
+
+#box_shadow{
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background-color: black;
+    z-index: 9999;
+
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+}
+
+#box_shadow.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+
+header{
+    display: flex;
+
+    .unnoficial{
+        font-size: 20px;
+        font-family: 'Kalam';
+        margin: 10px;
+        letter-spacing: 2px;
+        position: absolute;
+    }
+
+    #redtext {
+    color: rgb(255, 74, 74);
+    animation: pulseRed 3s infinite ease-in-out;
+    }
+
+        @keyframes pulseRed {
+        0%, 100% {
+            color: rgb(255, 74, 74);
+        }
+        50% {
+            color: rgb(200, 0, 0);
+        }
+    }
+
+    .namebort{
+        width: 320px;
+        height: 60px;
+        background-color: rgba(0, 0, 0, 0.521);
+        margin: auto;
+        margin-top: 1%;
+        border-radius: 5px;
+
+    p{
+        color: #4D9AFF;
+        font-family: 'Kalam';
+        text-align: center;
+    }
+
+    .p1{
+        font-size: 28px;
+        
+    }
+    .p2{
+        font-size: 14px;
+        margin-top: -10px;
+    }
+    }
+
+    img{
+        background-color: white;
+        width: 50px;
+        height: 50px;
+        border: solid 3px black;
+        border-radius: 50px;
+        margin: 10px;
+        position: absolute;
+        right: 0;
+    }
+
+    @media screen and (max-width: 560px) {
+        .namebort{
+            margin-top: 12%;
+        }
+
+        img{
+            width: 35px;
+            height: 35px;
+            border: solid 2px black;
+        }
+    }
+}
+
+
+main{
+    margin: auto;
+    margin-top: 5%;
+
+    .btnbox {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    max-width: 650px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 15px;
+    box-sizing: border-box;
+    }
+
+    /* Адаптив для телефонов */
+    @media (max-width: 600px) {
+    .btnbox {
+        grid-template-columns: 1fr;
+        max-width: 280px; /* Фиксирует ширину карточки на телефоне, чтобы она не растягивалась во весь экран */
+    }
+    }
+    .btn-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: #000;
+    transition: transform 0.2s ease;
+    }
+
+    .btn-card:hover {
+    transform: translateY(-4px);
+    }
+
+    .card-bg {
+    width: 100%;
+    height: auto;
+    display: block;
+    }
+
+    .card-content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+    box-sizing: border-box;
+    }
+
+    .card-icon {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    margin-bottom: 12px;
+    }
+
+    .card-content span {
+    font-family: sans-serif;
+    font-size: 20px;
+    font-weight: 500;
+    text-align: center;
+    font-family: 'Jura';
+    }
+
+
+
+
+.reg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    pointer-events: none;
+    background-color: #0000007c;
+    backdrop-filter: blur(5px);
+
+    display: none;
+
+    .reg_box {
+        width: 500px;
+        min-width: 300px;
+        margin: 10px;
+        background-color: rgba(19, 18, 18, 0.76);
+        border-radius: 10px;
+        pointer-events: auto;
+        backdrop-filter: blur(35px);
+        text-align: center;
+        padding: 10px;
+
+        p{
+            color: white;
+            font-size: 20px;
+            font-family: 'Jura';
+            margin: 10px;
+        }
+
+        button{
+            width: 90%;
+            height: 50px;
+            background-color: #4D9AFF;
+            color: black;
+            margin: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition-duration: 0.4s;
+        }
+
+        button:hover {
+            background-color: #114283;
+            width: 92%;
+            height: 55px;
+            color: white;
+        }
+
+        .privacy_note, a{
+            color: white;
+            font-size: 17px;
+            font-family: 'Jura';
+            margin: 10px;
+        }
+    }
+}
+
+
+.profile {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    pointer-events: none;
+    background-color: #0000007c;
+    backdrop-filter: blur(5px);
+
+    display: none;
+
+    .profile_box {
+        width: 500px;
+        max-width: 90vw;
+        min-width: 300px;
+        margin: 10px;
+        background-color: rgba(19, 18, 18, 0.76);
+        border-radius: 10px;
+        pointer-events: auto;
+        backdrop-filter: blur(35px);
+        padding: 10px;
+
+        .line1, .line2, .line3 {
+
+            img {
+                width: 60px;
+                background-color: rgb(245, 209, 142);
+                border-radius: 50px;
+            }
+
+            span {
+                color: white;
+                font-size: 20px;
+                font-family: 'Jura';
+                margin: 10px;
+            }
+        }
+
+        .line1 {
+            display: flex;
+            align-items: center;
+            justify-content: space-between; /* Выравнивает аватар влево, имя вправо в рамках одной ветки */
+
+            span {
+                /* position: absolute убран, чтобы не ломать поток */
+                text-align: right;
+            }
+        }
+
+        .line2 {
+            margin-top: 20px;
+        }
+
+        .line3 {
+            margin-bottom: 20px;
+        }
+
+        .coin {
+            width: 40px;
+            margin-bottom: -11px;
+        }
+
+        .balanc {
+            color: #75ab31;
+            font-size: 25px;
+            font-family: 'Jura';
+            font-weight: bold;
+        }
+
+        button {
+            width: 90%;
+            height: 30px;
+            background-color: #ff2929;
+            color: black;
+            border: #000 solid 2px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-family: 'Jura';
+            font-weight: bold;
+            transition-duration: 0.4s;
+
+            display: block;
+            margin: 0 auto;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background-color: #8a0000;
+            width: 92%;
+            height: 32px;
+            color: white;
+            border: #000000 dotted 2px;
+        }
+    }
+}
+
+}
+
+
+footer{
+
+    p{
+        color: #ffffff;
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        margin: 10px;
+        font-family: 'Jura';
+    }
+}
