@@ -31,6 +31,60 @@ body{
     pointer-events: auto;
 }
 
+#openbar{
+    position: fixed;
+    right: 0;
+    top: 0;
+    margin-top: 30%;
+    width: 30px;
+    height: 50px;
+    background-color: #ae00ff;
+    border: solid 3px black;
+    border-radius: 10px 0px 0px 10px;
+
+    img{
+        width: 20px;
+    }
+}
+
+@media screen and (max-width: 1000px) {
+    #openbar{
+    margin-top: 50%;
+}
+}
+
+#btnbar{
+    position: fixed;
+    right: 0;
+    top: 0;
+    margin-top: 25%;
+
+    background-color: #ae00ff;
+    border: solid 3px black;
+    border-radius: 10px 0px 0px 10px;
+
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+
+    img{
+        width: 35px;
+        display: block;
+        margin: 10px;
+        cursor: pointer;
+    }
+    
+}
+
+#btnbar.open {
+    transform: translateX(0);
+}
+
+@media screen and (max-width: 1000px) {
+    #btnbar{
+    margin-top: 40%;
+}
+}
+
 
 header{
     display: flex;
@@ -357,4 +411,10 @@ footer{
         margin: 10px;
         font-family: 'Jura';
     }
+}
+
+@media screen and (max-width: 800px) {
+    footer{
+    margin-top: 40px;
+}
 }

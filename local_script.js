@@ -259,3 +259,27 @@ document.addEventListener('DOMContentLoaded', () => {
   ensureBanScreenExists();
   refreshSession();
 });
+
+
+
+
+
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  const openBtn = document.getElementById('openbar');
+  const closeBtn = document.getElementById('btnclosebar');
+  const bar = document.getElementById('btnbar');
+
+  if (openBtn && bar) {
+    openBtn.addEventListener('click', () => {
+      bar.classList.add('open');
+    });
+  }
+
+  if (closeBtn && bar) {
+    closeBtn.addEventListener('click', () => {
+      bar.classList.remove('open');
+    });
+  }
+});
