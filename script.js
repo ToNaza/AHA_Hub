@@ -54,8 +54,10 @@ const BGM_TIME_KEY = 'bgm_time';
 const entranceAudio = document.getElementById('entranceAudio');
 const bgAudio = document.getElementById('bgAudio');
 
-if (entranceAudio) entranceAudio.volume = 0.4; // громкость звука входа, 0.0–1.0
-if (bgAudio) bgAudio.volume = 0.20; // громкость фоновой музыки, 0.0–1.0
+const ENTRANCE_VOLUME = 0.5; // громкость звука входа, 0.0–1.0
+const BG_VOLUME = 0.25; // громкость фоновой музыки, 0.0–1.0
+
+if (entranceAudio) entranceAudio.volume = ENTRANCE_VOLUME;
 
 function isSoundMuted() {
   return localStorage.getItem(SOUND_MUTED_KEY) === 'true';
@@ -96,6 +98,7 @@ function startBackgroundMusic() {
     bgAudio.currentTime = savedTime;
   }
 
+  bgAudio.volume = BG_VOLUME;
   applyMuteState();
   bgAudio.play().catch(err => console.log('Фоновая музыка заблокирована:', err));
 }
@@ -118,18 +121,34 @@ function playEntranceThenBackground() {
     return;
   }
 
-  if (!entranceAudio) {
+  if (!entranceAudio || !bgAudio) {
     startBackgroundMusic();
     return;
   }
 
-  applyMuteState();
-  entranceAudio.play().then(() => {
-    entranceAudio.addEventListener('ended', startBackgroundMusic, { once: true });
+  // Ключевой момент: оба видео запускаются СИНХРОННО прямо на загрузке
+  // страницы — это единственный момент, когда браузер разрешает автовоспроизведение
+  // видео со звуком. Фон при этом стартует БЕЗ звука (volume 0) и молча
+  // играет параллельно с джинглом входа. Когда джингл заканчивается — просто
+  // поднимаем громкость уже играющего фона, для этого повторное разрешение
+  // на автовоспроизведение не нужно.
+  bgAudio.volume = 0;
+  bgAudio.muted = false;
+
+  const entrancePlay = entranceAudio.play();
+  const bgPlay = bgAudio.play();
+
+  Promise.all([entrancePlay, bgPlay]).then(() => {
+    entranceAudio.addEventListener('ended', () => {
+      applyMuteState();
+      bgAudio.volume = BG_VOLUME;
+    }, { once: true });
   }).catch(() => {
-    // Если даже видео-трюк не сработал — ждём первое взаимодействие пользователя
+    // Если даже этот трюк не сработал — ждём первое взаимодействие пользователя
     const events = ['click', 'pointerdown', 'keydown', 'touchstart', 'scroll'];
     const handler = () => {
+      bgAudio.pause();
+      bgAudio.currentTime = 0;
       startBackgroundMusic();
       events.forEach(ev => document.removeEventListener(ev, handler));
     };
