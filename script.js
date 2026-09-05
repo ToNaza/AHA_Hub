@@ -54,8 +54,8 @@ const BGM_TIME_KEY = 'bgm_time';
 const entranceAudio = document.getElementById('entranceAudio');
 const bgAudio = document.getElementById('bgAudio');
 
-if (entranceAudio) entranceAudio.volume = 0.5; // громкость звука входа, 0.0–1.0
-if (bgAudio) bgAudio.volume = 0.25; // громкость фоновой музыки, 0.0–1.0
+if (entranceAudio) entranceAudio.volume = 0.4; // громкость звука входа, 0.0–1.0
+if (bgAudio) bgAudio.volume = 0.20; // громкость фоновой музыки, 0.0–1.0
 
 function isSoundMuted() {
   return localStorage.getItem(SOUND_MUTED_KEY) === 'true';
@@ -91,7 +91,7 @@ function setupSoundToggle() {
 function startBackgroundMusic() {
   if (!bgAudio) return;
 
-  const savedTime = parseFloat(localStorage.getItem(BGM_TIME_KEY));
+  const savedTime = parseFloat(sessionStorage.getItem(BGM_TIME_KEY));
   if (!isNaN(savedTime)) {
     bgAudio.currentTime = savedTime;
   }
@@ -103,13 +103,16 @@ function startBackgroundMusic() {
 // Вызывать перед КАЖДЫМ переходом на другую страницу сайта
 function saveBackgroundMusicTime() {
   if (!bgAudio) return;
-  localStorage.setItem(BGM_TIME_KEY, String(bgAudio.currentTime));
+  sessionStorage.setItem(BGM_TIME_KEY, String(bgAudio.currentTime));
 }
 
 function playEntranceThenBackground() {
-  // Если позиция фоновой музыки уже сохранена — это переход между
-  // страницами, а не первый заход. Джингл входа не повторяем.
-  const isReturningNavigation = localStorage.getItem(BGM_TIME_KEY) !== null;
+  // Если позиция фоновой музыки уже сохранена в sessionStorage — это переход
+  // между страницами САЙТА В ТЕКУЩЕЙ ВКЛАДКЕ, а не новый заход на сайт.
+  // sessionStorage сам очищается при закрытии вкладки/браузера, поэтому
+  // при каждом новом заходе (новая вкладка, перезапуск браузера) джингл
+  // входа снова сыграет.
+  const isReturningNavigation = sessionStorage.getItem(BGM_TIME_KEY) !== null;
   if (isReturningNavigation) {
     startBackgroundMusic();
     return;
