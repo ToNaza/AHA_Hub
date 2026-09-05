@@ -24,14 +24,7 @@ function animateColor() {
 
 animateColor();
 
-const soundWhod = new Audio('sound/whod.mpeg');
-soundWhod.preload = 'auto';
-
-soundWhod.volume = 0.4;
-
-soundWhod.load();
-
-// 2. Звуки клика
+// Звуки клика по карточкам — не связаны со звуком входа/фона, оставляем как было
 const bupSounds = [
   new Audio('sound/bup1.mp3'),
   new Audio('sound/bup2.mp3'),
@@ -40,9 +33,7 @@ const bupSounds = [
 
 bupSounds.forEach(sound => {
   sound.preload = 'auto';
-
   sound.volume = 1;
-  
   sound.load();
 });
 
@@ -50,67 +41,153 @@ let currentBupIndex = 0;
 
 function playNextBup() {
   const currentSound = bupSounds[currentBupIndex];
-  
   currentSound.currentTime = 0;
   currentSound.play().catch(err => console.log('Ошибка воспроизведения:', err));
-
   currentBupIndex = (currentBupIndex + 1) % bupSounds.length;
 }
 
+/* ==================== ЗВУК: переключатель, вход, фон ==================== */
 
-let hasPlayedEntrance = false;
+const SOUND_MUTED_KEY = 'sound_muted';
+const BGM_TIME_KEY = 'bgm_time';
 
-function playEntranceSound() {
-  if (!hasPlayedEntrance) {
-    soundWhod.play().then(() => {
-      hasPlayedEntrance = true;
-    }).catch(err => console.log('Autoplay blocked:', err));
+const entranceAudio = document.getElementById('entranceAudio');
+const bgAudio = document.getElementById('bgAudio');
+
+if (entranceAudio) entranceAudio.volume = 0.5; // громкость звука входа, 0.0–1.0
+if (bgAudio) bgAudio.volume = 0.25; // громкость фоновой музыки, 0.0–1.0
+
+function isSoundMuted() {
+  return localStorage.getItem(SOUND_MUTED_KEY) === 'true';
+}
+
+function setSoundMuted(muted) {
+  localStorage.setItem(SOUND_MUTED_KEY, muted ? 'true' : 'false');
+}
+
+function applyMuteState() {
+  const muted = isSoundMuted();
+  if (bgAudio) bgAudio.muted = muted;
+  if (entranceAudio) entranceAudio.muted = muted;
+}
+
+function setupSoundToggle() {
+  const toggle = document.getElementById('soundToggle');
+  if (!toggle) return;
+
+  // По умолчанию (нет записи в localStorage) звук ВКЛЮЧЁН
+  if (!isSoundMuted()) {
+    toggle.classList.add('active');
   }
+
+  toggle.addEventListener('click', () => {
+    const nowMuted = !isSoundMuted();
+    setSoundMuted(nowMuted);
+    applyMuteState();
+    toggle.classList.toggle('active', !nowMuted);
+  });
+}
+
+function startBackgroundMusic() {
+  if (!bgAudio) return;
+
+  const savedTime = parseFloat(localStorage.getItem(BGM_TIME_KEY));
+  if (!isNaN(savedTime)) {
+    bgAudio.currentTime = savedTime;
+  }
+
+  applyMuteState();
+  bgAudio.play().catch(err => console.log('Фоновая музыка заблокирована:', err));
+}
+
+// Вызывать перед КАЖДЫМ переходом на другую страницу сайта
+function saveBackgroundMusicTime() {
+  if (!bgAudio) return;
+  localStorage.setItem(BGM_TIME_KEY, String(bgAudio.currentTime));
+}
+
+function playEntranceThenBackground() {
+  // Если позиция фоновой музыки уже сохранена — это переход между
+  // страницами, а не первый заход. Джингл входа не повторяем.
+  const isReturningNavigation = localStorage.getItem(BGM_TIME_KEY) !== null;
+  if (isReturningNavigation) {
+    startBackgroundMusic();
+    return;
+  }
+
+  if (!entranceAudio) {
+    startBackgroundMusic();
+    return;
+  }
+
+  applyMuteState();
+  entranceAudio.play().then(() => {
+    entranceAudio.addEventListener('ended', startBackgroundMusic, { once: true });
+  }).catch(() => {
+    // Если даже видео-трюк не сработал — ждём первое взаимодействие пользователя
+    const events = ['click', 'pointerdown', 'keydown', 'touchstart', 'scroll'];
+    const handler = () => {
+      startBackgroundMusic();
+      events.forEach(ev => document.removeEventListener(ev, handler));
+    };
+    events.forEach(ev => document.addEventListener(ev, handler, { once: true }));
+  });
 }
 
 window.addEventListener('load', () => {
-  soundWhod.play().then(() => {
-    hasPlayedEntrance = true;
-  }).catch(() => {
-    const events = ['click', 'pointerdown', 'keydown', 'touchstart', 'scroll'];
-    const handler = () => {
-      playEntranceSound();
-      events.forEach(e => document.removeEventListener(e, handler));
-    };
-    events.forEach(e => document.addEventListener(e, handler, { once: true }));
-  });
+  setupSoundToggle();
+  playEntranceThenBackground();
 });
+
+/* ==================== Переходы между страницами с затемнением ==================== */
 
 document.addEventListener('DOMContentLoaded', () => {
   const buttons = document.querySelectorAll('.btnbox .btn-card');
   const boxShadow = document.getElementById('box_shadow');
+
+  function navigateWithFade(href) {
+    saveBackgroundMusicTime();
+
+    if (!boxShadow) {
+      window.location.href = href;
+      return;
+    }
+
+    boxShadow.classList.add('active');
+    boxShadow.addEventListener('transitionend', () => {
+      window.location.href = href;
+    }, { once: true });
+  }
 
   buttons.forEach(button => {
     button.addEventListener('click', (e) => {
       playNextBup();
 
       const href = button.getAttribute('href');
-
-      // Пустые ссылки ("#") никуда не ведут — просто звук клика, без перехода
       if (!href || href === '#') return;
 
-      // Если пользователь хочет открыть в новой вкладке (Ctrl/Cmd/Shift+клик
-      // или средняя кнопка мыши) — не мешаем, пусть браузер откроет как обычно
       if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) {
         return;
       }
 
       e.preventDefault();
+      navigateWithFade(href);
+    });
+  });
 
-      if (!boxShadow) {
-        window.location.href = href;
+  // Кнопка "назад" на других страницах сайта (id="back") — та же логика
+  const backBtn = document.getElementById('back');
+  if (backBtn) {
+    backBtn.addEventListener('click', (e) => {
+      const href = backBtn.getAttribute('href') || backBtn.dataset.href;
+      if (!href) return;
+
+      if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) {
         return;
       }
 
-      boxShadow.classList.add('active');
-      boxShadow.addEventListener('transitionend', () => {
-        window.location.href = href;
-      }, { once: true });
+      e.preventDefault();
+      navigateWithFade(href);
     });
-  });
+  }
 });

@@ -89,10 +89,74 @@ body{
 header{
     display: flex;
 
+
+    .toggle-container {
+    display: flex;
+    align-items: center;
+    background-color: #000; 
+    border-radius: 25px; 
+    padding: 5px;
+    cursor: pointer;
+    user-select: none; 
+    transition: background-color 0.3s ease;
+    position: absolute;
+    margin: 5px;
+    }
+
+    .toggle-label {
+    color: #fff; 
+    margin-left: 10px; 
+    font-size: 16px;
+    font-weight: bold;
+    }
+
+    .toggle-switch {
+    position: relative;
+    width: 40px;
+    height: 20px;
+    background-color: #333; 
+    border-radius: 12.5px;
+    overflow: hidden; 
+    }
+
+    .toggle-handle {
+    position: absolute;
+    top: 2.5px; 
+    left: 2.5px;
+    width: 15px;
+    height: 15px;
+    background-color: #fff;
+    border-radius: 50%;
+    transition: left 0.3s ease, background-color 0.3s ease;
+    z-index: 2; 
+    }
+
+    .toggle-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #00c853; 
+    border-radius: 12.5px;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 1;
+    }
+
+    .toggle-container.active .toggle-handle {
+    left: calc(100% - 19.5px);
+    }
+
+    .toggle-container.active .toggle-fill {
+    transform: translateX(0); 
+    }
+
     .unnoficial{
         font-size: 20px;
         font-family: 'Kalam';
         margin: 10px;
+        margin-left: 130px;
         letter-spacing: 2px;
         position: absolute;
     }
