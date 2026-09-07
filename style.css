@@ -462,6 +462,31 @@ main{
     }
 }
 
+.intro-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    background-color: #0000007c;
+    backdrop-filter: blur(5px);
+}
+
+.intro-modal-box {
+    width: 500px;
+    max-width: 90vw;
+    background-color: rgba(19, 18, 18, 0.76);
+    border-radius: 10px;
+    backdrop-filter: blur(35px);
+    padding: 20px;
+    color: white;
+    text-align: center;
+}
+
 }
 
 
