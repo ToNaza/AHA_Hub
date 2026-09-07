@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- <script src="./script.js" defer></script> -->
+    <script src="./script.js" defer></script>
     <script src="../version.js" defer></script>
     <script src="../local_script.js" defer></script>
     <link rel="icon" href="../media/ava.png">
@@ -15,8 +15,20 @@
 </head>
     <body>
         <div id="box_shadow"></div>
+        <video id="entranceAudio" src="../media/whod.mp4" playsinline style="display:none;"></video>
+        <video id="bgAudio" src="../media/fon_sound.mp4" loop playsinline style="display:none;"></video>
 
-        <header> <p id="redtext" class="unnoficial">Unnoficial</p>   <div class="namebort">  <p class="p1">AHA Hub</p> <p class="p2">Animal Hospital Anomaly</p>    </div>  <img id="prof" src="../media/profile.svg"/>      </header>
+        <header>    
+            <div class="toggle-container" id="soundToggle">
+                <div class="toggle-switch">
+                    <div class="toggle-handle"></div>
+                    <div class="toggle-fill"></div>
+                </div>
+            <span class="toggle-label">Sound</span>
+            </div> 
+            
+            <p id="redtext" class="unnoficial">Unnoficial</p>   <div class="namebort">  <p class="p1">AHA Hub</p> <p class="p2">Animal Hospital Anomaly</p>    </div>  <img id="prof" src="../media/profile.svg"/>      
+        </header>
 
         <main>  
             
@@ -45,7 +57,7 @@
 
         </main>
 
-        <footer>   <p id="versionInfo"></p>  </footer>
+        <footer> <button id="back"> back</button>  <p id="versionInfo"></p>  </footer>
 
         
     </body>
