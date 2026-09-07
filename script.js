@@ -36,7 +36,7 @@ const SITE_ENTERED_KEY = 'site_entered'; // sessionStorage — сбрасыва�
 const FIRST_VISIT_TEXT = 'Привет на аха хабе, а ты знал что этот текст всегда разный? Кстати не забывай о правилах если ты участник чата.';
 const RETURNING_VISIT_TEXTS = [
   'Правила для слабаков, сказал человек прежде чем обидется на бан.',
-  'А какую палочку твик выберешь ты?',
+  'А какую палочку твикc выберешь ты?',
   'Не стоит кушать китайский латьяо.',
 ];
 
@@ -44,8 +44,8 @@ const ENTRANCE_VOLUME = 0.5; // громкость звука входа, 0.0–
 const BG_VOLUME = 0.25;      // громкость фоновой музыки, 0.0–1.0
 const CLICK_VOLUME = 1;      // громкость звука клика, 0.0–1.0
 
-const entranceAudio = new Audio('/media/whod.mp3');
-const bgAudio = new Audio('/media/fon_sound.mp3');
+const entranceAudio = new Audio('/sound/whod.mp3');
+const bgAudio = new Audio('/sound/fon_sound.mp3');
 bgAudio.loop = true;
 
 const clickSounds = [
