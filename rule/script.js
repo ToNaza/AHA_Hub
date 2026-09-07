@@ -1,50 +1,58 @@
-/* ============================================================
-   1. АНИМАЦИЯ НАДПИСИ "Unnoficial" (пульсация красного)
-   ============================================================ */
+/* ==================== Анимация красного текста "Unnoficial" ==================== */
 
-(function initRedTextAnimation() {
-  const redText = document.getElementById('redtext');
-  if (!redText) return;
+const redText = document.getElementById('redtext');
+let progress = 0;
+let direction = 1;
+const ANIMATION_SPEED = 0.008;
 
-  let progress = 0;
-  let direction = 1;
-  const speed = 0.008;
+function animateColor() {
+  progress += ANIMATION_SPEED * direction;
 
-  function animateColor() {
-    progress += speed * direction;
-
-    if (progress >= 1) {
-      progress = 1;
-      direction = -1;
-    } else if (progress <= 0) {
-      progress = 0;
-      direction = 1;
-    }
-
-    const currentRed = Math.round(255 - progress * (255 - 100));
-    redText.style.color = `rgb(${currentRed}, 0, 0)`;
-
-    requestAnimationFrame(animateColor);
+  if (progress >= 1) {
+    progress = 1;
+    direction = -1;
+  } else if (progress <= 0) {
+    progress = 0;
+    direction = 1;
   }
 
-  animateColor();
-})();
+  const currentRed = Math.round(255 - progress * (255 - 100));
+  if (redText) {
+    redText.style.color = `rgb(${currentRed}, 0, 0)`;
+  }
 
+  requestAnimationFrame(animateColor);
+}
 
-/* ============================================================
-   2. ЗВУК: настройка громкости/переключатель, вход, фон
-   ============================================================ */
+animateColor();
 
-const SOUND_MUTED_KEY = 'sound_muted';   // localStorage — постоянное предпочтение пользователя
-const BGM_TIME_KEY = 'bgm_time';         // sessionStorage — сбрасывается с закрытием вкладки
+/* ==================== Настройки звука ==================== */
+
+const SOUND_MUTED_KEY = 'sound_muted';
+const BGM_TIME_KEY = 'bgm_time';
+const INTRO_SEEN_KEY = 'hide_intro_modal';
 
 const ENTRANCE_VOLUME = 0.5; // громкость звука входа, 0.0–1.0
 const BG_VOLUME = 0.25;      // громкость фоновой музыки, 0.0–1.0
+const CLICK_VOLUME = 1;      // громкость звука клика, 0.0–1.0
 
 const entranceAudio = document.getElementById('entranceAudio');
 const bgAudio = document.getElementById('bgAudio');
 
+const clickSounds = [
+  new Audio('sound/bup1.mp3'),
+  new Audio('sound/bup2.mp3'),
+  new Audio('sound/bup3.mp3'),
+];
+
+clickSounds.forEach(sound => {
+  sound.preload = 'auto';
+  sound.volume = CLICK_VOLUME;
+  sound.load();
+});
+
 if (entranceAudio) entranceAudio.volume = ENTRANCE_VOLUME;
+if (bgAudio) bgAudio.volume = BG_VOLUME;
 
 function isSoundMuted() {
   return localStorage.getItem(SOUND_MUTED_KEY) === 'true';
@@ -60,7 +68,8 @@ function applyMuteState() {
   if (entranceAudio) entranceAudio.muted = muted;
 }
 
-// Переключатель звука в шапке (#soundToggle), базово ВКЛЮЧЁН
+/* ---------- Переключатель звука (базово включён) ---------- */
+
 function setupSoundToggle() {
   const toggle = document.getElementById('soundToggle');
   if (!toggle) return;
@@ -77,7 +86,26 @@ function setupSoundToggle() {
   });
 }
 
-// Запускает/продолжает фоновую музыку с сохранённой секунды (если есть)
+/* ---------- Звук клика по кнопкам (3 варианта по кругу, случайный старт) ---------- */
+
+let clickSoundIndex = Math.floor(Math.random() * clickSounds.length);
+
+function playClickSound() {
+  const sound = clickSounds[clickSoundIndex];
+  sound.currentTime = 0;
+  sound.play().catch(err => console.log('Звук клика заблокирован:', err));
+  clickSoundIndex = (clickSoundIndex + 1) % clickSounds.length;
+}
+
+function setupClickSounds() {
+  document.addEventListener('click', (e) => {
+    const target = e.target.closest('button, .btn-card');
+    if (target) playClickSound();
+  });
+}
+
+/* ---------- Звук входа + фоновая музыка ---------- */
+
 function startBackgroundMusic() {
   if (!bgAudio) return;
 
@@ -86,163 +114,166 @@ function startBackgroundMusic() {
     bgAudio.currentTime = savedTime;
   }
 
-  bgAudio.volume = BG_VOLUME;
   applyMuteState();
   bgAudio.play().catch(err => console.log('Фоновая музыка заблокирована:', err));
 }
 
-// Вызывается перед КАЖДЫМ переходом на другую страницу сайта
+// Вызывается перед каждым переходом на другую страницу сайта
 function saveBackgroundMusicTime() {
   if (!bgAudio) return;
   sessionStorage.setItem(BGM_TIME_KEY, String(bgAudio.currentTime));
 }
 
-// Если пользователь только что зашёл на сайт (не переход между страницами
-// в этой же вкладке) — играем джингл входа, затем фон. Иначе сразу
-// продолжаем фон с сохранённой секунды.
-function playEntranceThenBackground() {
-  const isReturningNavigation = sessionStorage.getItem(BGM_TIME_KEY) !== null;
+function waitForFirstInteractionThen(callback) {
+  const events = ['click', 'pointerdown', 'keydown', 'touchstart', 'scroll'];
+  const handler = () => {
+    events.forEach(ev => document.removeEventListener(ev, handler));
+    callback();
+  };
+  events.forEach(ev => document.addEventListener(ev, handler, { once: true }));
+}
 
-  if (isReturningNavigation || !entranceAudio || !bgAudio) {
+// Проигрывает джингл входа, затем фон. Используется и по клику "Закрыть"
+// в модалке (гарантированно сработает — это настоящий пользовательский
+// клик), и как попытка "вслепую" для тех, кто уже согласился раньше.
+function playEntranceSequence() {
+  if (!entranceAudio) {
     startBackgroundMusic();
     return;
   }
 
-  // Оба видео запускаются СИНХРОННО в момент загрузки страницы — это
-  // единственный момент, когда браузер может разрешить автовоспроизведение
-  // со звуком. Фон при этом стартует без звука и молча играет параллельно
-  // с джинглом; когда джингл заканчивается — громкость фона поднимается
-  // (это уже не требует нового разрешения на автовоспроизведение).
-  bgAudio.volume = 0;
-  bgAudio.muted = false;
+  applyMuteState();
 
-  Promise.all([entranceAudio.play(), bgAudio.play()])
-    .then(() => {
-      entranceAudio.addEventListener('ended', () => {
-        applyMuteState();
-        bgAudio.volume = BG_VOLUME;
-      }, { once: true });
-    })
-    .catch(() => {
-      // Автовоспроизведение заблокировано браузером — честный fallback:
-      // ждём первое взаимодействие пользователя с страницей
-      const events = ['click', 'pointerdown', 'keydown', 'touchstart', 'scroll'];
-      const handler = () => {
-        bgAudio.pause();
-        bgAudio.currentTime = 0;
-        startBackgroundMusic();
-        events.forEach(ev => document.removeEventListener(ev, handler));
-      };
-      events.forEach(ev => document.addEventListener(ev, handler, { once: true }));
+  entranceAudio.play().then(() => {
+    entranceAudio.addEventListener('ended', startBackgroundMusic, { once: true });
+  }).catch(() => {
+    waitForFirstInteractionThen(() => {
+      entranceAudio.play().then(() => {
+        entranceAudio.addEventListener('ended', startBackgroundMusic, { once: true });
+      }).catch(() => startBackgroundMusic());
     });
-}
-
-
-/* ============================================================
-   3. ЗВУК КЛИКА — играет по очереди на любой кнопке сайта
-   ============================================================ */
-
-const bupSounds = [
-  new Audio('sound/bup1.mp3'),
-  new Audio('sound/bup2.mp3'),
-  new Audio('sound/bup3.mp3'),
-];
-
-bupSounds.forEach(sound => {
-  sound.preload = 'auto';
-  sound.volume = 1;
-  sound.load();
-});
-
-let currentBupIndex = 0;
-
-function playNextBup() {
-  const currentSound = bupSounds[currentBupIndex];
-  currentSound.currentTime = 0;
-  currentSound.play().catch(err => console.log('Ошибка воспроизведения:', err));
-  currentBupIndex = (currentBupIndex + 1) % bupSounds.length;
-}
-
-function setupClickSounds() {
-  // Любая кнопка и любая карточка-ссылка на сайте
-  const clickable = document.querySelectorAll('button, .btn-card');
-  clickable.forEach(el => {
-    el.addEventListener('click', playNextBup);
   });
 }
 
+/* ---------- Стартовая информационная модалка ---------- */
 
-/* ============================================================
-   4. ПЕРЕХОДЫ МЕЖДУ СТРАНИЦАМИ С ЗАТЕМНЕНИЕМ + КНОПКА "НАЗАД"
-   ============================================================ */
+function setupIntroModal() {
+  const modal = document.getElementById('introModal');
+  const closeBtn = document.getElementById('introCloseBtn');
+  const dontShowCheckbox = document.getElementById('introDontShow');
 
-function navigateWithFade(href) {
-  saveBackgroundMusicTime();
-
-  const boxShadow = document.getElementById('box_shadow');
-  if (!boxShadow) {
-    window.location.href = href;
+  if (!modal || !closeBtn) {
+    // Модалки нет на этой странице — просто пробуем запустить звук как есть
+    playEntranceSequence();
     return;
   }
 
-  boxShadow.classList.add('active');
-  boxShadow.addEventListener('transitionend', () => {
-    window.location.href = href;
-  }, { once: true });
+  modal.style.display = 'flex';
+
+  closeBtn.addEventListener('click', () => {
+    if (dontShowCheckbox && dontShowCheckbox.checked) {
+      localStorage.setItem(INTRO_SEEN_KEY, 'true');
+    }
+    modal.style.display = 'none';
+    playEntranceSequence(); // настоящий клик — звук точно проиграется
+  });
 }
+
+function initEntranceAndBackground() {
+  // Если позиция фоновой музыки уже сохранена в sessionStorage — это переход
+  // между страницами сайта в текущей вкладке, а не новый заход. Модалку
+  // и джингл входа не показываем, просто продолжаем фон.
+  const isReturningNavigation = sessionStorage.getItem(BGM_TIME_KEY) !== null;
+  if (isReturningNavigation) {
+    startBackgroundMusic();
+    return;
+  }
+
+  const hasAgreedBefore = localStorage.getItem(INTRO_SEEN_KEY) === 'true';
+  if (hasAgreedBefore) {
+    // Согласие уже было раньше — пробуем запустить сразу, без модалки
+    playEntranceSequence();
+    return;
+  }
+
+  setupIntroModal();
+}
+
+/* ==================== Переходы между страницами с затемнением ==================== */
 
 function setupPageTransitions() {
-  const cards = document.querySelectorAll('.btnbox .btn-card');
+  const boxShadow = document.getElementById('box_shadow');
 
-  cards.forEach(card => {
-    card.addEventListener('click', (e) => {
+  function navigateWithFade(href) {
+    saveBackgroundMusicTime();
+
+    if (!boxShadow) {
+      window.location.href = href;
+      return;
+    }
+
+    boxShadow.classList.add('active');
+    boxShadow.addEventListener('transitionend', () => {
+      window.location.href = href;
+    }, { once: true });
+  }
+
+  document.addEventListener('click', (e) => {
+    const card = e.target.closest('.btn-card');
+    if (card) {
       const href = card.getAttribute('href');
       if (!href || href === '#') return;
-
-      // Ctrl/Cmd/Shift+клик или средняя кнопка мыши — открыть в новой
-      // вкладке как обычно, не перехватываем переход
       if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return;
 
       e.preventDefault();
       navigateWithFade(href);
-    });
-  });
+      return;
+    }
 
-  const backBtn = document.getElementById('back');
-  if (backBtn) {
-    backBtn.addEventListener('click', (e) => {
+    const backBtn = e.target.closest('#back');
+    if (backBtn) {
       const href = backBtn.getAttribute('href') || backBtn.dataset.href;
       if (!href) return;
-
       if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return;
 
       e.preventDefault();
       navigateWithFade(href);
-    });
-  }
-}
-
-// Кнопка "Назад" браузера может восстановить страницу из bfcache со
-// старым классом .active на #box_shadow — сбрасываем при каждом показе
-function setupBfcacheFix() {
-  window.addEventListener('pageshow', () => {
-    const boxShadow = document.getElementById('box_shadow');
-    if (boxShadow) boxShadow.classList.remove('active');
+    }
   });
 }
 
-
-/* ============================================================
-   ТОЧКА ВХОДА
-   ============================================================ */
-
-document.addEventListener('DOMContentLoaded', () => {
-  setupClickSounds();
-  setupPageTransitions();
-  setupBfcacheFix();
+// Восстановление из bfcache кнопкой "Назад" браузера может вернуть DOM
+// с классом .active на #box_shadow — сбрасываем на каждый показ страницы
+window.addEventListener('pageshow', () => {
+  const boxShadow = document.getElementById('box_shadow');
+  if (boxShadow) boxShadow.classList.remove('active');
 });
+
+/* ==================== Точка входа ==================== */
 
 window.addEventListener('load', () => {
   setupSoundToggle();
-  playEntranceThenBackground();
+  setupClickSounds();
+  setupPageTransitions();
+  initEntranceAndBackground();
 });
+
+
+
+
+
+
+function toggleCard(button) {
+  const card = button.closest('.rules-card');
+  const isExpanded = card.classList.toggle('expanded');
+
+  if (isExpanded) {
+    button.textContent = 'Свернуть';
+    button.classList.remove('blue');
+    button.classList.add('orange');
+  } else {
+    button.textContent = 'Развернуть';
+    button.classList.remove('orange');
+    button.classList.add('blue');
+  }
+}

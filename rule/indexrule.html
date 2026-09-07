@@ -31,6 +31,51 @@
         </header>
 
         <main>  
+
+
+            <div class="rules-container">
+            <!-- Обычный закрытый блок -->
+            <div class="rules-card">
+                <div class="rules-card-body">
+                <h2>Права</h2>
+                <p>> Каждый участник имеет право на свободное общение в приделах установленных правил.<br>
+                > Каждый участник имеет право на обжалование решения модерации.<br>
+                >Каждый участник обязуется ознакомится с правилами - не знание правил, не освобождает от ответственности.
+                <br><br>
+                > Модерация оставляет за собой право выдачи наказания участникам чата при надобности вне указанных правил, но при условии полной надобности данного действия. В случаи, если апелляция участника, что получил без основанное наказание, будет удовлетворена. Модератор получит выговор что будет установлен виртуальным судом.</p>
+                </div>
+            </div>
+
+            <!-- Открываемый блок -->
+            <div class="rules-card expandable">
+                <div class="rules-card-body">
+                <p>Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text</p>
+                
+                <!-- Скрытый текст -->
+                    <div class="rules-hidden-content">
+                        <p>Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text</p>
+                        <p>Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text</p>
+                    </div>
+                </div>
+                <button class="rules-btn blue" onclick="toggleCard(this)">Развернуть</button>
+            </div>
+
+                        <div class="rules-card expandable">
+                <div class="rules-card-body">
+                <p>Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text</p>
+                
+                <!-- Скрытый текст -->
+                    <div class="rules-hidden-content">
+                        <p>Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text</p>
+                        <p>Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text</p>
+                    </div>
+                </div>
+                <button class="rules-btn blue" onclick="toggleCard(this)">Развернуть</button>
+            </div>
+</div>
+    
+  </div>
+</div>
             
             
 
@@ -57,7 +102,7 @@
 
         </main>
 
-        <footer> <button id="back" data-href="../index.html">Назад</button></p>  </footer>
+        <footer> <button id="back" data-href="../index.html">Назад</button> <p id="versionInfo"></p> </footer>
 
         
     </body>

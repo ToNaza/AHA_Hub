@@ -408,10 +408,119 @@ main{
     }
 }
 
+
+.rules-container {
+    background-color: rgba(15, 21, 30, 0.9);
+    padding: 16px;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 480px;
+    margin: 20px auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-sizing: border-box;
+
+    .rules-card {
+        background-color: #d1d5db;
+        border-radius: 8px;
+        border: 2px solid #2d3748;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+
+        .rules-card-body {
+            padding: 12px 14px;
+            color: #1a1a1a;
+            font-family: 'Jura', sans-serif;
+            font-size: 14px;
+            line-height: 1.35;
+
+            h3 {
+                margin: 0;
+                color: #1a1a1a;
+                text-align: left;
+            }
+
+            p {
+                margin: 0;
+                color: #1a1a1a;
+                text-align: left;
+                font-size: 17px;
+                font-weight: 500px;
+            }
+
+            .rules-hidden-content {
+                max-height: 0;
+                overflow: hidden;
+                opacity: 0;
+                transition: max-height 0.35s ease-in-out, opacity 0.25s ease-in-out, margin-top 0.35s ease-in-out;
+
+                p + p {
+                    margin-top: 10px;
+                }
+            }
+        }
+
+        &.expanded {
+            .rules-hidden-content {
+                max-height: 600px;
+                opacity: 1;
+                margin-top: 10px;
+            }
+        }
+
+        .rules-btn {
+            width: 100%;
+            height: auto;
+            padding: 8px 0;
+            font-family: 'Jura', sans-serif;
+            font-weight: bold;
+            font-size: 14px;
+            border: none;
+            border-top: 2px solid #2d3748;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+            outline: none;
+            display: block;
+
+            &.blue {
+                background-color: #0099ff;
+                color: #000000;
+
+                &:hover {
+                    background-color: #0080e6;
+                    color: #000000;
+                }
+            }
+
+            &.orange {
+                background-color: #ff6600;
+                color: #000000;
+
+                &:hover {
+                    background-color: #e65c00;
+                    color: #000000;
+                }
+            }
+        }
+    }
+}
+
 }
 
 
 footer{
+
+    #back{
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        margin: 10px;
+        background-color: #0080e6;
+        padding: 5px 25px;
+        border: #000 2px solid;
+        border-radius: 10px;
+    }
 
     p{
         color: #ffffff;
