@@ -30,14 +30,22 @@ animateColor();
 
 const SOUND_MUTED_KEY = 'sound_muted';
 const BGM_TIME_KEY = 'bgm_time';
-const INTRO_SEEN_KEY = 'hide_intro_modal';
+const HAS_VISITED_KEY = 'has_visited_before'; // localStorage — навсегда
+const SITE_ENTERED_KEY = 'site_entered'; // sessionStorage — сбрасывается только при закрытии вкладки/браузера, НЕ при обычной перезагрузке (F5)
+
+const FIRST_VISIT_TEXT = 'Привет на аха хабе, а ты знал что этот текст всегда разный? Кстати не забывай о правилах если ты участник чата.';
+const RETURNING_VISIT_TEXTS = [
+  'Правила для слабаков, сказал человек прежде чем обидется на бан.',
+  'А какую палочку твик выберешь ты?',
+  'Не стоит кушать китайский латьяо.',
+];
 
 const ENTRANCE_VOLUME = 0.5; // громкость звука входа, 0.0–1.0
 const BG_VOLUME = 0.25;      // громкость фоновой музыки, 0.0–1.0
 const CLICK_VOLUME = 1;      // громкость звука клика, 0.0–1.0
 
-const entranceAudio = new Audio('/sound/whod.mp3');
-const bgAudio = new Audio('/sound/fon_sound.mp3');
+const entranceAudio = new Audio('/media/whod.mp3');
+const bgAudio = new Audio('/media/fon_sound.mp3');
 bgAudio.loop = true;
 
 const clickSounds = [
@@ -152,10 +160,19 @@ function playEntranceSequence() {
 
 /* ---------- Стартовая информационная модалка ---------- */
 
+function pickIntroText() {
+  const hasVisitedBefore = localStorage.getItem(HAS_VISITED_KEY) === 'true';
+  if (!hasVisitedBefore) {
+    return FIRST_VISIT_TEXT;
+  }
+  const randomIndex = Math.floor(Math.random() * RETURNING_VISIT_TEXTS.length);
+  return RETURNING_VISIT_TEXTS[randomIndex];
+}
+
 function setupIntroModal() {
   const modal = document.getElementById('introModal');
   const closeBtn = document.getElementById('introCloseBtn');
-  const dontShowCheckbox = document.getElementById('introDontShow');
+  const textEl = document.getElementById('introText');
 
   if (!modal || !closeBtn) {
     // Модалки нет на этой странице — просто пробуем запустить звук как есть
@@ -163,12 +180,14 @@ function setupIntroModal() {
     return;
   }
 
+  if (textEl) {
+    textEl.textContent = pickIntroText();
+  }
+
   modal.style.display = 'flex';
 
   closeBtn.addEventListener('click', () => {
-    if (dontShowCheckbox && dontShowCheckbox.checked) {
-      localStorage.setItem(INTRO_SEEN_KEY, 'true');
-    }
+    localStorage.setItem(HAS_VISITED_KEY, 'true');
     modal.style.display = 'none';
     playEntranceSequence(); // настоящий клик — звук точно проиграется
   });
@@ -184,9 +203,13 @@ function initEntranceAndBackground() {
     return;
   }
 
-  const hasAgreedBefore = localStorage.getItem(INTRO_SEEN_KEY) === 'true';
-  if (hasAgreedBefore) {
-    // Согласие уже было раньше — пробуем запустить сразу, без модалки
+  // Отдельный флаг именно на "уже показывали модалку в этой сессии" — он
+  // не зависит от bgm_time, поэтому переживает обычную перезагрузку (F5),
+  // но сбрасывается при закрытии вкладки/браузера (новая сессия)
+  const alreadyShownThisSession = sessionStorage.getItem(SITE_ENTERED_KEY) === 'true';
+  sessionStorage.setItem(SITE_ENTERED_KEY, 'true');
+
+  if (alreadyShownThisSession) {
     playEntranceSequence();
     return;
   }

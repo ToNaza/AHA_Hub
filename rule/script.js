@@ -252,3 +252,22 @@ window.addEventListener('load', () => {
   setupPageTransitions();
   initEntranceAndBackground();
 });
+
+
+
+
+
+function toggleCard(button) {
+  const card = button.closest('.rules-card');
+  const isExpanded = card.classList.toggle('expanded');
+
+  if (isExpanded) {
+    button.textContent = 'Свернуть';
+    button.classList.remove('blue');
+    button.classList.add('orange');
+  } else {
+    button.textContent = 'Развернуть';
+    button.classList.remove('orange');
+    button.classList.add('blue');
+  }
+}
