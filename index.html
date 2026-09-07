@@ -15,8 +15,6 @@
 </head>
     <body>
         <div id="box_shadow"></div>
-        <video id="entranceAudio" src="./media/whod.mp4" playsinline style="display:none;"></video>
-        <video id="bgAudio" src="./media/fon_sound.mp4" loop playsinline style="display:none;"></video>
 
         <header>    
         <div class="toggle-container" id="soundToggle">
@@ -90,15 +88,22 @@
                     <div class="line1"> <img id="ava" src="./media/profile.svg"> <span id="name">Name Surname</span> </div>
                     <div class="line2"> <span id="username">Username -</span> </div>
                     <div class="line3"> <span id="uid">Id -</span> </div>
-                    <div class="line4"> <img class="coin" title="Meow Coin" src="./media/coin.png"> <span class="balanc"> 0000 </span> </div>
+                    <div class="line4"> <img class="coin" title="Meow Coin" src="./media/coin.png"> <span id="balanc" class="balanc"> 0000 </span> </div>
                     <button id="exit"> Выйти из аккаунта </button>
                 </div>
             </div>
 
 
+            <!-- <div class="mycard" id="balance">
+                <div class="mycard_box">
+                    <span id="balanc" class="balanc"> 0000 </span>
+                </div>
+            </div> -->
+
+
             <div id="introModal" class="intro-modal">
                 <div class="intro-modal-box">
-                    <p>Текст с информацией о сайте...</p>
+                    <p>Для полного взаимодействия с сайтом рекомендуем зарегистрироватся, нажав на иконку профиля в правом верхнем углу.</p>
                     <label>
                     <input type="checkbox" id="introDontShow">
                     Больше не показывать

@@ -36,13 +36,14 @@ const ENTRANCE_VOLUME = 0.5; // громкость звука входа, 0.0–
 const BG_VOLUME = 0.25;      // громкость фоновой музыки, 0.0–1.0
 const CLICK_VOLUME = 1;      // громкость звука клика, 0.0–1.0
 
-const entranceAudio = document.getElementById('entranceAudio');
-const bgAudio = document.getElementById('bgAudio');
+const entranceAudio = new Audio('/sound/whod.mp3');
+const bgAudio = new Audio('/sound/fon_sound.mp3');
+bgAudio.loop = true;
 
 const clickSounds = [
-  new Audio('sound/bup1.mp3'),
-  new Audio('sound/bup2.mp3'),
-  new Audio('sound/bup3.mp3'),
+  new Audio('/sound/bup1.mp3'),
+  new Audio('/sound/bup2.mp3'),
+  new Audio('/sound/bup3.mp3'),
 ];
 
 clickSounds.forEach(sound => {
@@ -51,8 +52,10 @@ clickSounds.forEach(sound => {
   sound.load();
 });
 
-if (entranceAudio) entranceAudio.volume = ENTRANCE_VOLUME;
-if (bgAudio) bgAudio.volume = BG_VOLUME;
+entranceAudio.volume = ENTRANCE_VOLUME;
+bgAudio.volume = BG_VOLUME;
+entranceAudio.preload = 'auto';
+bgAudio.preload = 'auto';
 
 function isSoundMuted() {
   return localStorage.getItem(SOUND_MUTED_KEY) === 'true';
@@ -64,8 +67,8 @@ function setSoundMuted(muted) {
 
 function applyMuteState() {
   const muted = isSoundMuted();
-  if (bgAudio) bgAudio.muted = muted;
-  if (entranceAudio) entranceAudio.muted = muted;
+  bgAudio.muted = muted;
+  entranceAudio.muted = muted;
 }
 
 /* ---------- Переключатель звука (базово включён) ---------- */
@@ -107,8 +110,6 @@ function setupClickSounds() {
 /* ---------- Звук входа + фоновая музыка ---------- */
 
 function startBackgroundMusic() {
-  if (!bgAudio) return;
-
   const savedTime = parseFloat(sessionStorage.getItem(BGM_TIME_KEY));
   if (!isNaN(savedTime)) {
     bgAudio.currentTime = savedTime;
@@ -120,12 +121,11 @@ function startBackgroundMusic() {
 
 // Вызывается перед каждым переходом на другую страницу сайта
 function saveBackgroundMusicTime() {
-  if (!bgAudio) return;
   sessionStorage.setItem(BGM_TIME_KEY, String(bgAudio.currentTime));
 }
 
 function waitForFirstInteractionThen(callback) {
-  const events = ['click', 'pointerdown', 'keydown', 'touchstart', 'scroll'];
+  const events = ['click', 'pointerdown', 'keydown', 'touchstart', 'scroll', 'mousemove'];
   const handler = () => {
     events.forEach(ev => document.removeEventListener(ev, handler));
     callback();
@@ -137,11 +137,6 @@ function waitForFirstInteractionThen(callback) {
 // в модалке (гарантированно сработает — это настоящий пользовательский
 // клик), и как попытка "вслепую" для тех, кто уже согласился раньше.
 function playEntranceSequence() {
-  if (!entranceAudio) {
-    startBackgroundMusic();
-    return;
-  }
-
   applyMuteState();
 
   entranceAudio.play().then(() => {
