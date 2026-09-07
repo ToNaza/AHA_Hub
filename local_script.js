@@ -112,7 +112,6 @@ function setupModalBehaviour() {
       isAuthenticated = false;
       closeModal(profileModal);
       stopSessionPolling();
-      openModal(regModal);
     });
   }
 
@@ -192,7 +191,6 @@ async function refreshSession() {
       isAuthenticated = false;
       hideBanScreen();
       stopSessionPolling();
-      openModal(document.getElementById('reg'));
     }
   } catch (err) {
     console.error('Не удалось проверить сессию:', err);
