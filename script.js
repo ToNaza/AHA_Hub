@@ -282,6 +282,88 @@ window.addEventListener('pageshow', () => {
   if (boxShadow) boxShadow.classList.remove('active');
 });
 
+/* ==================== Пасхалка: падающая картинка ==================== */
+
+// ============ ЗДЕСЬ НАСТРАИВАЕТСЯ ШАНС ПОЯВЛЕНИЯ ============
+const EASTER_EGG_CHECK_INTERVAL_MS = 3000; // как часто проверяем шанс появления (мс). 30000 = раз в 30 секунд
+const EASTER_EGG_SPAWN_CHANCE = 1;       // шанс появления при КАЖДОЙ такой проверке. 0.02 = 2%
+// ===============================================================
+
+const EASTER_EGG_FALL_DURATION_MS = 4000; // сколько картинка падает сверху вниз, мс
+const EASTER_EGG_IMAGE_SRC = '/media/intern.png'; // поменяй на свой путь к картинке
+const EASTER_EGG_POP_SOUND_SRC = '/sound/scream.mp3';    // поменяй на свой путь к звуку
+
+const popSound = new Audio(EASTER_EGG_POP_SOUND_SRC);
+popSound.preload = 'auto';
+popSound.volume = 1;
+
+let easterEggActive = false;
+
+function spawnEasterEgg() {
+  if (easterEggActive) return;
+  easterEggActive = true;
+
+  const img = document.createElement('img');
+  img.src = EASTER_EGG_IMAGE_SRC;
+  img.className = 'easter-egg-falling';
+
+  const approxWidth = 80; // примерная ширина картинки в px, для расчёта случайной позиции
+  const randomLeft = Math.random() * Math.max(window.innerWidth - approxWidth, 0);
+  img.style.left = `${randomLeft}px`;
+  img.style.transitionDuration = `${EASTER_EGG_FALL_DURATION_MS}ms`;
+
+  document.body.appendChild(img);
+
+  requestAnimationFrame(() => {
+    img.classList.add('falling');
+  });
+
+  // Если долетела до низа и её не поймали — просто убираем
+  const missTimer = setTimeout(() => {
+    img.remove();
+    easterEggActive = false;
+  }, EASTER_EGG_FALL_DURATION_MS + 100);
+
+  img.addEventListener('click', () => {
+    clearTimeout(missTimer);
+    catchEasterEgg(img);
+  });
+}
+
+function catchEasterEgg(img) {
+  popSound.currentTime = 0;
+  popSound.play().catch(err => console.log('Звук пасхалки заблокирован:', err));
+
+  img.classList.add('popped');
+
+  fetch('/api/add-coins', { method: 'POST' })
+    .then(res => res.json())
+    .then(data => {
+      if (data.balance !== undefined) {
+        const balanceEl = document.getElementById('balanc');
+        if (balanceEl) balanceEl.textContent = String(data.balance);
+      }
+    })
+    .catch(err => console.log('Не удалось начислить монеты:', err));
+
+  setTimeout(() => {
+    img.remove();
+    easterEggActive = false;
+  }, 300);
+}
+
+function setupEasterEgg() {
+  // Пасхалка только на главной странице — проверяем по наличию блока карточек
+  const isMainPage = document.querySelector('.btnbox');
+  if (!isMainPage) return;
+
+  setInterval(() => {
+    if (Math.random() < EASTER_EGG_SPAWN_CHANCE) {
+      spawnEasterEgg();
+    }
+  }, EASTER_EGG_CHECK_INTERVAL_MS);
+}
+
 /* ==================== Точка входа ==================== */
 
 window.addEventListener('load', () => {
@@ -289,4 +371,5 @@ window.addEventListener('load', () => {
   setupClickSounds();
   setupPageTransitions();
   initEntranceAndBackground();
+  setupEasterEgg();
 });

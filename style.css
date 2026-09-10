@@ -507,3 +507,31 @@ footer{
     margin-top: 40px;
 }
 }
+
+
+
+
+
+.easter-egg-falling {
+    position: fixed;
+    top: -100px;
+    width: 60px;
+    z-index: 5000;
+    cursor: pointer;
+    transition: top linear;
+}
+
+.easter-egg-falling.falling {
+    top: 100vh;
+}
+
+.easter-egg-falling.popped {
+    animation: eggPop 0.3s ease forwards;
+    pointer-events: none;
+}
+
+@keyframes eggPop {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.3); opacity: 0.7; }
+    100% { transform: scale(0); opacity: 0; }
+}
