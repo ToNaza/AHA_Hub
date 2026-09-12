@@ -124,7 +124,7 @@ module.exports = async (req, res) => {
 
     await sendMessage(
       message.chat.id,
-      'Готово! Вы вошли на сайт AHA Hub. Можете вернуться в браузер.'
+      'Готово! Вы вошли на сайт AHA Hub. Можете вернуться в браузер. - https://aha-hub-site.vercel.app'
     );
 
     res.status(200).json({ ok: true });

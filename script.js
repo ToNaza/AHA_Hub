@@ -286,7 +286,7 @@ window.addEventListener('pageshow', () => {
 
 // ============ ЗДЕСЬ НАСТРАИВАЕТСЯ ШАНС ПОЯВЛЕНИЯ ============
 const EASTER_EGG_CHECK_INTERVAL_MS = 30000; 
-const EASTER_EGG_SPAWN_CHANCE = 0.8;      
+const EASTER_EGG_SPAWN_CHANCE = 0.3;      
 // ===============================================================
 
 const EASTER_EGG_FALL_DURATION_MS = 4000; // сколько картинка падает сверху вниз, мс
