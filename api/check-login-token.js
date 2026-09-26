@@ -46,12 +46,28 @@ module.exports = async (req, res) => {
     if (!existingUser) {
       const { error: insertError } = await supabase
         .from('users')
-        .insert({ id: uid, balance: 0, blocked: false });
+        .insert({
+          id: uid,
+          balance: 0,
+          blocked: false,
+          first_name: tokenRow.first_name || '',
+          username: tokenRow.username || '',
+        });
       if (insertError) throw insertError;
-    } else if (existingUser.blocked) {
-      await supabase.from('login_tokens').delete().eq('token', token);
-      res.status(200).json({ status: 'blocked' });
-      return;
+    } else {
+      if (existingUser.blocked) {
+        await supabase.from('login_tokens').delete().eq('token', token);
+        res.status(200).json({ status: 'blocked' });
+        return;
+      }
+      // Обновляем имя/юзернейм на случай если человек их поменял в Telegram
+      await supabase
+        .from('users')
+        .update({
+          first_name: tokenRow.first_name || '',
+          username: tokenRow.username || '',
+        })
+        .eq('id', uid);
     }
 
     // Токен одноразовый — удаляем сразу после использования

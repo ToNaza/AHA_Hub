@@ -468,13 +468,17 @@ main{
         top: 0;
         width: 100%;
         height: 100%;
+        display: flex;
         align-items: center;
         justify-content: center;
         z-index: 1000;
         background-color: #0000007c;
         backdrop-filter: blur(5px);
 
-        display: none;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    
 
         .mycard_box{
             width: 400px;
@@ -486,7 +490,17 @@ main{
             backdrop-filter: blur(35px);
             padding: 20px;
 
-            .line4{
+            .line1{
+
+                p{
+                    color: white;
+                    font-size: 20px;
+                    font-family: 'Jura';
+                    margin: 10px;
+                }
+            }
+
+            .line2{
                 margin-top: -15px;
             }
         
@@ -510,17 +524,21 @@ main{
                 margin-top: 10px;
                 border-radius: 10px 10px 0px 0px;
                 border: 2px solid #75ab31;
+                max-height: 200px;
+                overflow-y: auto;
             }
 
-            .line5{
+            .line3{
                 display: flex;
 
                 button{
                     width: 50%;
-                    height: 30px;
+                    padding: 7px 0px 7px 0px;
                     background-color: #000000;
                     border: 2px solid #75ab31;
                     color: white;
+                    font-size: 13.5px;
+                    cursor: pointer;
                     transition-duration: 0.4s;
                 }
 
@@ -529,11 +547,95 @@ main{
                     background-color: #ffffff;
                     color: black;
                     width: 60%;
+                    font-size: 15px;
+                    padding: 5px 0px 5px 0px;
+                }
+            }
+        }
+    }
+
+    .mycard.active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+
+    .transaction{
+        position: fixed;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1001;
+        background-color: #0000007c;
+        backdrop-filter: blur(5px);
+
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+
+
+        .transaction_box{
+            width: 400px;
+            max-width: 600px;
+
+            margin: 5px;
+            background-color: rgba(19, 18, 18, 0.76);
+            border-radius: 10px;
+            backdrop-filter: blur(35px);
+            padding: 20px;
+
+            .forma{
+                display: block;
+                background-color: #000;
+                border: solid 2px #75ab31;
+                border-radius: 10px 10px 0px 0px;
+                padding: 5px 0px 10px 0px;
+                
+                input{
+                    margin: 5px;
+                    width: 97%;
+                    height: 28px;
+                    border-radius: 7px;
+                    padding-left: 5px;
+                    font-weight: bold;
+                    background-color: #b2a2fa;
+                }
+                input::placeholder{
+                    color: rgba(0, 0, 0, 0.658);
                 }
             }
 
+            .line1{
+                display: flex;
 
+                button{
+                    width: 50%;
+                    padding: 7px 0px 7px 0px;
+                    background-color: #000000;
+                    border: 2px solid #75ab31;
+                    color: white;
+                    font-size: 13.5px;
+                    cursor: pointer;
+                    transition-duration: 0.4s;
+                }
+
+                
+                button:hover {
+                    background-color: #ffffff;
+                    color: black;
+                    width: 60%;
+                    font-size: 15px;
+                    padding: 5px 0px 5px 0px;
+                }
+            }
         }
+    }
+        .transaction.active {
+        opacity: 1;
+        pointer-events: auto;
     }
 
 

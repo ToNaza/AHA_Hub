@@ -96,11 +96,24 @@
 
             <div class="mycard" id="balance">
                 <div class="mycard_box">
-                    <div class="line4"> <img class="coin" title="Meow Coin" src="./media/coin.png"> <span id="balanc" class="balanc"> 0000 </span> </div>
+                    <div class="line1">   <p>Игровой Банк</p>    </div>
+                    <div class="line2"> <img class="coin" title="Meow Coin" src="./media/coin.png"> <span id="balanc" class="balanc"> 0000 </span> </div>
                     <div clas="operations"></div>
                     <div id="operations"></div>
-                    <div class="line5"><button style="border-radius: 0px 0px 0px 10px;" id="transaction">Сделать транзакцию</button>    <button style="border-radius: 0px 0px 10px 0px;" id="transaction">Информация</button></div>
+                    <div class="line3"><button style="border-radius: 0px 0px 0px 10px;" id="opentransaction">Создать транзакцию</button>    <button style="border-radius: 0px 0px 10px 0px;" id="openinfob">Информация</button></div>
+                </div>
+            </div>
+
+            <div class="transaction" id="transaction">
+                <div class="transaction_box">
+                    <form class="forma">
+                        <input type="number" id="sum" placeholder="* Введите сумму" required>
+                        <input type="number" id="id1" placeholder="* Введите свой айди" required>
+                        <input type="number" id="id2" placeholder="* Введите айди получателя" required>
+                        <input type="text" id="textt" style="background-color: white;" placeholder="Сообщение к транзакции" maxlength="50">
+                    </form>
                     
+                    <div class="line1">   <button id="cancelTransaction" style="border-radius: 0px 0px 0px 10px;">Отменить</button>    <button id="push" style="border-radius: 0px 0px 10px 0px;">Отправить</button> </div>
                 </div>
             </div>
 
