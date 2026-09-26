@@ -285,13 +285,13 @@ window.addEventListener('pageshow', () => {
 /* ==================== Пасхалка: падающая картинка ==================== */
 
 // ============ ЗДЕСЬ НАСТРАИВАЕТСЯ ШАНС ПОЯВЛЕНИЯ ============
-const EASTER_EGG_CHECK_INTERVAL_MS = 30000; 
-const EASTER_EGG_SPAWN_CHANCE = 0.3;      
+const EASTER_EGG_CHECK_INTERVAL_MS = 30000; // как часто проверяем шанс появления (мс). 30000 = раз в 30 секунд
+const EASTER_EGG_SPAWN_CHANCE = 0.02;       // шанс появления при КАЖДОЙ такой проверке. 0.02 = 2%
 // ===============================================================
 
 const EASTER_EGG_FALL_DURATION_MS = 4000; // сколько картинка падает сверху вниз, мс
-const EASTER_EGG_IMAGE_SRC = '/media/intern.png'; // поменяй на свой путь к картинке
-const EASTER_EGG_POP_SOUND_SRC = '/sound/scream.mp3';    // поменяй на свой путь к звуку
+const EASTER_EGG_IMAGE_SRC = '/media/easter_egg.png'; // поменяй на свой путь к картинке
+const EASTER_EGG_POP_SOUND_SRC = '/sound/pop.mp3';    // поменяй на свой путь к звуку
 
 const popSound = new Audio(EASTER_EGG_POP_SOUND_SRC);
 popSound.preload = 'auto';
@@ -339,9 +339,8 @@ function catchEasterEgg(img) {
   fetch('/api/add-coins', { method: 'POST' })
     .then(res => res.json())
     .then(data => {
-      if (data.balance !== undefined) {
-        const balanceEl = document.getElementById('balanc');
-        if (balanceEl) balanceEl.textContent = String(data.balance);
+      if (data.balance !== undefined && typeof updateBalanceDisplay === 'function') {
+        updateBalanceDisplay(data.balance);
       }
     })
     .catch(err => console.log('Не удалось начислить монеты:', err));

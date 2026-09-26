@@ -162,11 +162,18 @@ function renderProfileFromLocalStorage() {
   }
 }
 
+function updateBalanceDisplay(balance) {
+  const value = String(balance ?? 0);
+  const profileBalanceEl = document.getElementById('balanc');
+  const cardBalanceEl = document.getElementById('balancCard');
+  if (profileBalanceEl) profileBalanceEl.textContent = value;
+  if (cardBalanceEl) cardBalanceEl.textContent = value;
+}
+
 function renderBalanceAndId(user) {
   const uidEl = document.getElementById('uid');
-  const balanceEl = document.getElementById('balanc');
   if (uidEl) uidEl.textContent = `Id - ${user.id}`;
-  if (balanceEl) balanceEl.textContent = String(user.balance ?? 0);
+  updateBalanceDisplay(user.balance);
 }
 
 /* ---------- Проверка сессии (авторизован? забанен?) ---------- */
@@ -411,8 +418,7 @@ function setupBankCard() {
           return;
         }
 
-        const balanceEl = document.getElementById('balanc');
-        if (balanceEl) balanceEl.textContent = String(result.balance);
+        updateBalanceDisplay(result.balance);
 
         closeModalFade(transactionModal);
         loadOperations();
