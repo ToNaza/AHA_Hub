@@ -112,6 +112,7 @@ function setupModalBehaviour() {
       isAuthenticated = false;
       closeModal(profileModal);
       stopSessionPolling();
+      openModal(regModal);
     });
   }
 
@@ -191,6 +192,7 @@ async function refreshSession() {
       isAuthenticated = false;
       hideBanScreen();
       stopSessionPolling();
+      openModal(document.getElementById('reg'));
     }
   } catch (err) {
     console.error('Не удалось проверить сессию:', err);
@@ -250,10 +252,183 @@ function hideBanScreen() {
   if (el) el.style.display = 'none';
 }
 
+/* ---------- Плавное открытие/закрытие модалок (opacity) ---------- */
+
+function openModalFade(el) {
+  if (!el) return;
+  el.style.display = 'flex';
+  requestAnimationFrame(() => {
+    el.classList.add('active');
+  });
+}
+
+function closeModalFade(el) {
+  if (!el) return;
+  el.classList.remove('active');
+  el.addEventListener('transitionend', () => {
+    el.style.display = 'none';
+  }, { once: true });
+}
+
+/* ---------- Виртуальный банк ---------- */
+
+function renderOperationsList(operations) {
+  const container = document.getElementById('operations');
+  if (!container) return;
+
+  container.innerHTML = '';
+
+  if (!operations || operations.length === 0) {
+    container.innerHTML = '<p style="color:#888; text-align:center; padding:10px;">Операций пока нет</p>';
+    return;
+  }
+
+  operations.forEach(op => {
+    const row = document.createElement('div');
+    row.className = 'operation-row';
+
+    const isIncome = op.amount > 0;
+    const sign = isIncome ? '+' : '-';
+    const amountAbs = Math.abs(op.amount);
+    const direction = isIncome ? 'от' : 'на';
+    const messagePart = op.message ? ` "${op.message}"` : '';
+
+    row.textContent = `${sign}${amountAbs}c ${direction} "${op.counterparty_name}"${messagePart}`;
+    row.style.color = isIncome ? '#75ab31' : '#ff6b6b';
+
+    container.appendChild(row);
+  });
+}
+
+async function loadOperations() {
+  try {
+    const response = await fetch('/api/get-operations');
+    if (!response.ok) return;
+    const result = await response.json();
+    renderOperationsList(result.operations);
+  } catch (err) {
+    console.error('Не удалось загрузить операции:', err);
+  }
+}
+
+function setupBankCard() {
+  const cardTrigger = document.getElementById('btncard');
+  const balanceModal = document.getElementById('balance');
+  const transactionModal = document.getElementById('transaction');
+  const openTransactionBtn = document.getElementById('opentransaction');
+  const cancelTransactionBtn = document.getElementById('cancelTransaction');
+  const pushBtn = document.getElementById('push');
+  const sumInput = document.getElementById('sum');
+  const id1Input = document.getElementById('id1');
+  const id2Input = document.getElementById('id2');
+  const textInput = document.getElementById('textt');
+
+  if (cardTrigger) {
+    cardTrigger.addEventListener('click', () => {
+      openModalFade(balanceModal);
+      if (isAuthenticated) {
+        loadOperations();
+      } else {
+        renderOperationsList([]);
+      }
+    });
+  }
+
+  if (balanceModal) {
+    document.addEventListener('click', (e) => {
+      if (balanceModal.style.display !== 'flex') return;
+      const box = balanceModal.querySelector('.mycard_box');
+      const isInsideBox = box && box.contains(e.target);
+      const isOnTrigger = cardTrigger && cardTrigger.contains(e.target);
+      if (!isInsideBox && !isOnTrigger) {
+        closeModalFade(balanceModal);
+      }
+    });
+  }
+
+  if (openTransactionBtn) {
+    openTransactionBtn.addEventListener('click', () => {
+      if (!isAuthenticated) {
+        alert('Нужно войти в аккаунт, чтобы создавать транзакции');
+        return;
+      }
+
+      const profile = JSON.parse(localStorage.getItem('telegram_profile') || 'null');
+      if (id1Input && profile) {
+        id1Input.value = profile.id;
+        id1Input.readOnly = true;
+      }
+      if (id2Input) id2Input.value = '';
+      if (sumInput) sumInput.value = '';
+      if (textInput) textInput.value = '';
+
+      openModalFade(transactionModal);
+    });
+  }
+
+  if (cancelTransactionBtn) {
+    cancelTransactionBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      closeModalFade(transactionModal);
+    });
+  }
+
+  if (transactionModal) {
+    document.addEventListener('click', (e) => {
+      if (transactionModal.style.display !== 'flex') return;
+      const box = transactionModal.querySelector('.transaction_box');
+      const isInsideBox = box && box.contains(e.target);
+      const isOnTrigger = openTransactionBtn && openTransactionBtn.contains(e.target);
+      if (!isInsideBox && !isOnTrigger) {
+        closeModalFade(transactionModal);
+      }
+    });
+  }
+
+  if (pushBtn) {
+    pushBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+
+      const recipientId = id2Input ? id2Input.value.trim() : '';
+      const amount = sumInput ? sumInput.value.trim() : '';
+      const message = textInput ? textInput.value.trim() : '';
+
+      if (!recipientId || !amount) {
+        alert('Заполните сумму и айди получателя');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/transfer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ recipientId, amount, message }),
+        });
+        const result = await response.json();
+
+        if (!response.ok) {
+          alert(result.error || 'Не удалось выполнить перевод');
+          return;
+        }
+
+        const balanceEl = document.getElementById('balanc');
+        if (balanceEl) balanceEl.textContent = String(result.balance);
+
+        closeModalFade(transactionModal);
+        loadOperations();
+      } catch (err) {
+        console.error('Ошибка транзакции:', err);
+        alert('Не удалось выполнить перевод');
+      }
+    });
+  }
+}
+
 /* ---------- Точка входа ---------- */
 
 document.addEventListener('DOMContentLoaded', () => {
   setupModalBehaviour();
+  setupBankCard();
   ensureBanScreenExists();
   refreshSession();
 });
