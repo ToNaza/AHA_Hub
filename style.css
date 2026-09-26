@@ -560,17 +560,21 @@ main{
     }
 
 
-    .transaction{
-        position: fixed;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1001;
-        background-color: #0000007c;
-        backdrop-filter: blur(5px);
+.transaction{
+    position: fixed;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+    background-color: #0000007c;
+    backdrop-filter: blur(5px);
+
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
 
         opacity: 0;
         pointer-events: none;
