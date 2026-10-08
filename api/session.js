@@ -35,7 +35,7 @@ module.exports = async (req, res) => {
 
     const { data: user, error } = await supabase
       .from('users')
-      .select('id, balance, blocked')
+      .select('id, balance, blocked, is_admin')
       .eq('id', payload.uid)
       .maybeSingle();
 

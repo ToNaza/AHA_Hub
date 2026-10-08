@@ -1,6 +1,7 @@
 const TELEGRAM_BOT_USERNAME = 'aha_helper_bot'; // без @
 
 let isAuthenticated = false;
+let isAdmin = false;
 let sessionPollTimer = null;
 let loginPollTimer = null;
 let loginPollAttempts = 0;
@@ -112,7 +113,6 @@ function setupModalBehaviour() {
       isAuthenticated = false;
       closeModal(profileModal);
       stopSessionPolling();
-      openModal(regModal);
     });
   }
 
@@ -185,6 +185,7 @@ async function refreshSession() {
 
     if (result.authenticated) {
       isAuthenticated = true;
+      isAdmin = Boolean(result.user.is_admin);
       renderProfileFromLocalStorage();
       renderBalanceAndId(result.user);
 
@@ -197,10 +198,12 @@ async function refreshSession() {
       startSessionPolling();
     } else {
       isAuthenticated = false;
+      isAdmin = false;
       hideBanScreen();
       stopSessionPolling();
-      openModal(document.getElementById('reg'));
     }
+
+    updateAdminUI();
   } catch (err) {
     console.error('Не удалось проверить сессию:', err);
   }
@@ -223,6 +226,8 @@ function stopSessionPolling() {
 /* ---------- Экран бана ---------- */
 
 function ensureBanScreenExists() {
+  // Если в HTML есть свой #banwindow — запасной экран не нужен
+  if (document.getElementById('banwindow')) return;
   if (document.getElementById('ban-screen')) return;
 
   const overlay = document.createElement('div');
@@ -249,13 +254,18 @@ function ensureBanScreenExists() {
   document.body.appendChild(overlay);
 }
 
+function getBanElement() {
+  return document.getElementById('banwindow') || document.getElementById('ban-screen');
+}
+
 function showBanScreen() {
   ensureBanScreenExists();
-  document.getElementById('ban-screen').style.display = 'flex';
+  const el = getBanElement();
+  if (el) el.style.display = 'flex';
 }
 
 function hideBanScreen() {
-  const el = document.getElementById('ban-screen');
+  const el = getBanElement();
   if (el) el.style.display = 'none';
 }
 
@@ -272,9 +282,16 @@ function openModalFade(el) {
 function closeModalFade(el) {
   if (!el) return;
   el.classList.remove('active');
-  el.addEventListener('transitionend', () => {
-    el.style.display = 'none';
-  }, { once: true });
+
+  const onEnd = (e) => {
+    // Игнорируем transitionend от вложенных элементов (например hover кнопок)
+    if (e.target !== el) return;
+    el.removeEventListener('transitionend', onEnd);
+    if (!el.classList.contains('active')) {
+      el.style.display = 'none';
+    }
+  };
+  el.addEventListener('transitionend', onEnd);
 }
 
 /* ---------- Виртуальный банк ---------- */
@@ -430,11 +447,142 @@ function setupBankCard() {
   }
 }
 
+/* ---------- Админ-панель: блокировка пользователей ---------- */
+
+// Кнопка #btnban видна только админам. Это лишь косметика — реальную
+// защиту обеспечивает сервер (api/admin-*.js проверяют is_admin по базе)
+function updateAdminUI() {
+  const btnBan = document.getElementById('btnban');
+  if (btnBan) btnBan.style.display = isAdmin ? 'block' : 'none';
+}
+
+function setBlockButtonState(btn, blocked) {
+  btn.textContent = blocked ? 'Разблокировать' : 'Заблокировать';
+  btn.classList.toggle('blocked', blocked);
+}
+
+async function toggleUserBlock(user, btn) {
+  const newBlocked = !user.blocked;
+  btn.disabled = true;
+
+  try {
+    const response = await fetch('/api/admin-set-blocked', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: user.id, blocked: newBlocked }),
+    });
+    const result = await response.json();
+
+    if (!response.ok) {
+      alert(result.error || 'Не удалось изменить статус');
+      return;
+    }
+
+    user.blocked = result.blocked;
+    setBlockButtonState(btn, user.blocked);
+  } catch (err) {
+    console.error('Ошибка блокировки:', err);
+    alert('Не удалось изменить статус');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function renderAdminUserList(users) {
+  const container = document.getElementById('aklist');
+  if (!container) return;
+
+  container.innerHTML = '';
+
+  if (!users || users.length === 0) {
+    const empty = document.createElement('p');
+    empty.textContent = 'Пользователей пока нет';
+    empty.style.cssText = 'color:#888; padding:10px;';
+    container.appendChild(empty);
+    return;
+  }
+
+  users.forEach(user => {
+    const row = document.createElement('div');
+    row.className = 'ak-row';
+
+    const idEl = document.createElement('span');
+    idEl.className = 'ak-id';
+    idEl.textContent = user.id;
+    row.appendChild(idEl);
+
+    if (user.is_admin) {
+      const tag = document.createElement('span');
+      tag.className = 'ak-tag';
+      tag.textContent = 'админ';
+      row.appendChild(tag);
+    } else {
+      const btn = document.createElement('button');
+      btn.className = 'ak-toggle';
+      setBlockButtonState(btn, user.blocked);
+      btn.addEventListener('click', () => toggleUserBlock(user, btn));
+      row.appendChild(btn);
+    }
+
+    container.appendChild(row);
+  });
+}
+
+async function loadAdminUsers() {
+  try {
+    const response = await fetch('/api/admin-users');
+    const result = await response.json();
+
+    if (!response.ok) {
+      alert(result.error || 'Не удалось загрузить список');
+      return;
+    }
+
+    renderAdminUserList(result.users);
+  } catch (err) {
+    console.error('Не удалось загрузить пользователей:', err);
+  }
+}
+
+function setupAdminPanel() {
+  // Прячем кнопку сразу, до проверки сессии, чтобы не мелькала у обычных людей
+  const btnBan = document.getElementById('btnban');
+  if (btnBan) btnBan.style.display = 'none';
+
+  const modal = document.getElementById('aclistModal');
+  const closeBtn = document.getElementById('aklistCloseBtn');
+
+  if (btnBan && modal) {
+    btnBan.addEventListener('click', () => {
+      if (!isAdmin) return;
+      openModalFade(modal);
+      loadAdminUsers();
+    });
+  }
+
+  if (closeBtn && modal) {
+    closeBtn.addEventListener('click', () => closeModalFade(modal));
+  }
+
+  if (modal) {
+    document.addEventListener('click', (e) => {
+      if (modal.style.display !== 'flex') return;
+      const box = modal.querySelector('.aklistmodal-box');
+      const isInsideBox = box && box.contains(e.target);
+      const isOnTrigger = btnBan && btnBan.contains(e.target);
+      if (!isInsideBox && !isOnTrigger) {
+        closeModalFade(modal);
+      }
+    });
+  }
+}
+
 /* ---------- Точка входа ---------- */
 
 document.addEventListener('DOMContentLoaded', () => {
   setupModalBehaviour();
   setupBankCard();
+  setupAdminPanel();
   ensureBanScreenExists();
   refreshSession();
 });
