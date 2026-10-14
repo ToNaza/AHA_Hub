@@ -447,10 +447,6 @@ function setupBankCard() {
   }
 }
 
-/* ---------- Админ-панель: блокировка пользователей ---------- */
-
-// Кнопка #btnban видна только админам. Это лишь косметика — реальную
-// защиту обеспечивает сервер (api/admin-*.js проверяют is_admin по базе)
 function updateAdminUI() {
   const btnBan = document.getElementById('btnban');
   if (btnBan) btnBan.style.display = isAdmin ? 'block' : 'none';
