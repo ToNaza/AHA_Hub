@@ -43,7 +43,7 @@
 
             <div class="rules-card expandable">
                 <div class="rules-card-body">
-                <p>Инфа о сообществе</p>
+                <p>⊚ Сообщество</p>
 
                     <div class="rules-hidden-content">
                         <p></p>
@@ -54,7 +54,7 @@
 
             <div class="rules-card expandable">
                 <div class="rules-card-body">
-                <p>Инфа о сайте</p>
+                <p>⊚ Сайт</p>
 
                     <div class="rules-hidden-content">
                         <p></p>
@@ -65,7 +65,18 @@
 
             <div class="rules-card expandable">
                 <div class="rules-card-body">
-                <p>Инфа о правилах</p>
+                <p>⊚ Правила</p>
+
+                    <div class="rules-hidden-content">
+                        <p>» Зачем нужны правила?<br>« Правила нужны для поддержания порядка в сообществе, создания нужной атмосферы где люди смогут общаться не опасаясь получить негативное впечатление от беседы.<br><br>» Зачем нужно столько правил?<br>« Большинство правил просто разбиты на несколько подтипов для удобства квалификации нарушения.</p>
+                    </div>
+                </div>
+                <button class="rules-btn blue" onclick="toggleCard(this)">Развернуть</button>
+            </div>
+
+            <div class="rules-card expandable">
+                <div class="rules-card-body">
+                <p>⊚ Блок "суд"</p>
 
                     <div class="rules-hidden-content">
                         <p></p>
@@ -76,7 +87,7 @@
 
             <div class="rules-card expandable">
                 <div class="rules-card-body">
-                <p>Инфа о блоке "суд"</p>
+                <p>⊚ Блок "связь"</p>
 
                     <div class="rules-hidden-content">
                         <p></p>
@@ -87,7 +98,7 @@
 
             <div class="rules-card expandable">
                 <div class="rules-card-body">
-                <p>Инфа о блоке "связь"</p>
+                <p>⊚ Виртуальный кошелёк</p>
 
                     <div class="rules-hidden-content">
                         <p></p>
@@ -98,18 +109,7 @@
 
             <div class="rules-card expandable">
                 <div class="rules-card-body">
-                <p>Инфа о виртуальном кошельке</p>
-
-                    <div class="rules-hidden-content">
-                        <p></p>
-                    </div>
-                </div>
-                <button class="rules-btn blue" onclick="toggleCard(this)">Развернуть</button>
-            </div>
-
-            <div class="rules-card expandable">
-                <div class="rules-card-body">
-                <p>Инфа о рп</p>
+                <p>⊚ Инфа о рп</p>
 
                     <div class="rules-hidden-content">
                         <p></p>
@@ -138,7 +138,7 @@
                 <div class="profile_box">
                     <div class="line1"> <img id="ava" src="../media/profile.svg"> <span id="name">Name Surname</span> </div>
                     <div class="line2"> <span id="username">Username -</span> </div>
-                    <div class="line3"> <span id="uid">Id -</span> </div>
+                    <div class="line3"> <span id="uid">Id -</span>  <button id="copyid"><img src="./media/copy.svg"/></button>  </div>
                     <div class="line4"> <img class="coin" title="Meow Coin" src="../media/coin.png"> <span class="balanc"> 0000 </span> </div>
                     <button id="exit"> Выйти из аккаунта </button>
                 </div>

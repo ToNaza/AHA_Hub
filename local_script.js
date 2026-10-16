@@ -2,6 +2,7 @@ const TELEGRAM_BOT_USERNAME = 'aha_helper_bot'; // без @
 
 let isAuthenticated = false;
 let isAdmin = false;
+let currentUserId = '';
 let sessionPollTimer = null;
 let loginPollTimer = null;
 let loginPollAttempts = 0;
@@ -164,13 +165,13 @@ function renderProfileFromLocalStorage() {
 
 function updateBalanceDisplay(balance) {
   const value = String(balance ?? 0);
-  const profileBalanceEl = document.getElementById('balanc');
-  const cardBalanceEl = document.getElementById('balancCard');
-  if (profileBalanceEl) profileBalanceEl.textContent = value;
-  if (cardBalanceEl) cardBalanceEl.textContent = value;
+  document.querySelectorAll('#balanc, #balancCard, .balanc').forEach((el) => {
+    el.textContent = value;
+  });
 }
 
 function renderBalanceAndId(user) {
+  currentUserId = String(user.id);
   const uidEl = document.getElementById('uid');
   if (uidEl) uidEl.textContent = `Id - ${user.id}`;
   updateBalanceDisplay(user.balance);
@@ -447,6 +448,10 @@ function setupBankCard() {
   }
 }
 
+/* ---------- Админ-панель: блокировка пользователей ---------- */
+
+// Кнопка #btnban видна только админам. Это лишь косметика — реальную
+// защиту обеспечивает сервер (api/admin-*.js проверяют is_admin по базе)
 function updateAdminUI() {
   const btnBan = document.getElementById('btnban');
   if (btnBan) btnBan.style.display = isAdmin ? 'block' : 'none';
@@ -573,9 +578,60 @@ function setupAdminPanel() {
   }
 }
 
+/* ---------- Кнопка копирования ID ---------- */
+
+const COPY_ICON_DONE = '/media/check.svg'; // положи сюда свою иконку «скопировано»
+const COPY_ICON_RESET_MS = 1500; // сколько показывается иконка «скопировано»
+
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch (e) {}
+  document.body.removeChild(ta);
+  return ok;
+}
+
+function setupCopyIdButton() {
+  const btn = document.getElementById('copyid');
+  if (!btn) return;
+  const img = btn.querySelector('img');
+  // Исходную иконку берём из самой разметки, чтобы не зависеть от путей на разных страницах
+  const defaultSrc = img ? img.getAttribute('src') : '';
+  let resetTimer = null;
+
+  btn.addEventListener('click', async () => {
+    let id = currentUserId;
+    if (!id) {
+      const uidEl = document.getElementById('uid');
+      const m = uidEl && uidEl.textContent.match(/\d+/);
+      id = m ? m[0] : '';
+    }
+    if (!id) return;
+
+    let ok = false;
+    try {
+      await navigator.clipboard.writeText(id);
+      ok = true;
+    } catch (e) {
+      ok = fallbackCopy(id);
+    }
+    if (!ok || !img) return;
+
+    img.src = COPY_ICON_DONE;
+    clearTimeout(resetTimer);
+    resetTimer = setTimeout(() => { img.src = defaultSrc; }, COPY_ICON_RESET_MS);
+  });
+}
+
 /* ---------- Точка входа ---------- */
 
 document.addEventListener('DOMContentLoaded', () => {
+  setupCopyIdButton();
   setupModalBehaviour();
   setupBankCard();
   setupAdminPanel();

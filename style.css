@@ -230,35 +230,6 @@ header{
     }
 }
 
-#banwindow{
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: #000;
-    color: rgb(255, 0, 0);
-    z-index: 9999;
-    display: none;
-    align-items: center;
-    justify-content: center;
-
-    .b{
-        display: block;
-        max-width: 300px;
-        min-width: 60%;
-        
-        h2{
-            text-align: center;
-        }
-
-        p{
-
-            font-size: 23px;
-        }
-    }
-}
-
 main{
     margin: auto;
     margin-top: 5%;
@@ -421,7 +392,7 @@ main{
             backdrop-filter: blur(35px);
             padding: 10px;
 
-            .line1, .line2, .line3 {
+            .line1, .line2 {
 
                 img {
                     width: 60px;
@@ -453,8 +424,34 @@ main{
             }
 
             .line3 {
+                span {
+                    color: white;
+                    font-size: 20px;
+                    font-family: 'Jura';
+                    margin: 10px;
+                }
+
                 margin-bottom: 20px;
+
+                button{
+                    background-color: #75ab31;
+                    border: solid black 2px;
+                    border-radius: 10px;
+                    margin-top: 5px;
+                    cursor: pointer;
+                    transition-duration: 0.4s;
+                    img{
+                        width: 25px;
+                        padding: 2px 2px 0px 2px;
+                    }
+                }
+
+                button:hover {
+                    background-color: #0011ff;
+                    border: #000000 dotted 2px;
+                }
             }
+
 
             .coin {
                 width: 40px;
@@ -468,7 +465,7 @@ main{
                 font-weight: bold;
             }
 
-            button {
+            #exit {
                 width: 90%;
                 height: 30px;
                 background-color: #ff2929;
@@ -486,7 +483,7 @@ main{
                 margin-top: 20px;
             }
 
-            button:hover {
+            #exit:hover {
                 background-color: #8a0000;
                 width: 92%;
                 height: 32px;
