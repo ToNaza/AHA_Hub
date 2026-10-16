@@ -304,7 +304,7 @@ main{
 
                 margin-bottom: 20px;
 
-                #exit{
+                button{
                     background-color: #75ab31;
                     border: solid black 2px;
                     border-radius: 10px;
@@ -317,7 +317,7 @@ main{
                     }
                 }
 
-                #exit:hover {
+                button:hover {
                     background-color: #0011ff;
                     border: #000000 dotted 2px;
                 }
@@ -335,7 +335,7 @@ main{
             font-weight: bold;
         }
 
-        button {
+        #exit {
             width: 90%;
             height: 30px;
             background-color: #ff2929;
@@ -353,7 +353,7 @@ main{
             margin-top: 20px;
         }
 
-        button:hover {
+        #exit:hover {
             background-color: #8a0000;
             width: 92%;
             height: 32px;
