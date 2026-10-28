@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="./script.js" defer></script>
+    <script src="./version.js" defer></script>
+    <script src="./local_script.js" defer></script>
+    <link rel="icon" href="./media/ava.png">
+    <link rel="stylesheet" href="./style.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Jura&family=Kalam&family=Pacifico&family=Roboto+Mono&display=swap" rel="stylesheet">
+    <link  href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+    <title>AHA Hub</title>
+</head>
+    <body>
+        <div id="box_shadow"></div>
+
+        <header>    
+        <div class="toggle-container" id="soundToggle">
+            <div class="toggle-switch">
+                <div class="toggle-handle"></div>
+                <div class="toggle-fill"></div>
+            </div>
+        <span class="toggle-label">Sound</span>
+        </div>
+
+<p id="redtext" class="unnoficial">Unnoficial</p>   <div class="namebort">  <p class="p1">AHA Hub</p> <p class="p2">Animal Hospital Anomaly</p>    </div>  <img id="prof" src="./media/profile.svg"/>      </header>
+
+
+        <main>  
+            <div class="btnbox">
+                <a href="./rule/indexrule.html" class="btn-card">
+                    <img src="media/preview.png" class="card-bg" alt="">
+                    <div class="card-content">
+                        <img src="media/rule.svg" class="card-icon" alt="Rules">
+                        <span>Rules / Правила</span>
+                    </div>
+                </a>
+
+                <a href="./info/indexinfo.html" class="btn-card">
+                    <img src="media/preview.png" class="card-bg" alt="">
+                    <div class="card-content">
+                        <img src="media/info.svg" class="card-icon" alt="Info">
+                        <span>Info / Информация</span>
+                    </div>
+                </a>
+
+                <a href="#" class="btn-card">
+                    <img src="media/preview.png" class="card-bg" alt="">
+                    <div class="card-content">
+                        <img src="media/Court.png" class="card-icon" alt="Court">
+                        <span>Court / Суд</span>
+                    </div>
+                </a>
+
+                <a href="./Connection/indexconn.html" class="btn-card">
+                    <img src="media/preview.png" class="card-bg" alt="">
+                    <div class="card-content">
+                        <img src="media/Connection.png" class="card-icon" alt="Connection">
+                        <span>Connection / Связь</span>
+                    </div>
+                </a>
+            </div>
+            
+            <button id="openbar"> <img src="./media/openimg.png"></button>
+
+            <div id="btnbar">
+                <img id="btncard" src="./media/Card.png">
+                <img id="btngame" src="./media/Game.png">
+                <img id="btnban" src="./media/Ban.png">
+                <img id="btnclosebar" src="./media/closeimg.png">
+            </div>
+
+            <div id="reg" class="reg">
+                <div class="reg_box">
+                    <p>Зарегистрируйтесь или Войдите</p>
+                    <button id="entrance">Ввойти через Tg</button>
+                    <p class="privacy_note">
+                    Нажмите на кнопку и подтвердите вход. Авторизация проходит в соответствии с <a href="https://telegram.org/privacy" target="_blank">политикой конфиденциальности тг</a>.
+                    </p>
+                    <button style="height: 30px;" id="skip">Ввойти потом</button>
+                </div>
+            </div>
+
+            <div id="profile" class="profile">
+                <div class="profile_box">
+                    <div class="line1"> <img id="ava" src="./media/profile.svg"> <span id="name">Name Surname</span> </div>
+                    <div class="line2"> <span id="username">Username -</span> </div>
+                    <div class="line3"> <span id="uid">Id -</span>  <button id="copyid"><img src="./media/copy.svg"/></button> </div>
+                    <div class="line4"> <img class="coin" title="Meow Coin" src="./media/coin.png"> <span id="balanc" class="balanc"> 0000 </span> </div>
+                    <button id="exit"> Выйти из аккаунта </button>
+                </div>
+            </div>
+
+            <div class="mycard" id="balance">
+                <div class="mycard_box">
+                    <div class="line1">   <p>Игровой Банк</p>    </div>
+                    <div class="line2"> <img class="coin" title="Meow Coin" src="./media/coin.png"> <span id="balancCard" class="balanc"> 0000 </span> </div>
+                    <div clas="operations"></div>
+                    <div id="operations"></div>
+                    <div class="line3"><button style="border-radius: 0px 0px 0px 10px;" id="opentransaction">Создать транзакцию</button>    <button style="border-radius: 0px 0px 10px 0px;" id="openinfob">Информация</button></div>
+                </div>
+            </div>
+
+            <div class="transaction" id="transaction">
+                <div class="transaction_box">
+                    <form class="forma">
+                        <input type="number" id="sum" placeholder="* Введите сумму" required>
+                        <input type="number" id="id1" placeholder="* Введите свой айди" required>
+                        <input type="number" id="id2" placeholder="* Введите айди получателя" required>
+                        <input type="text" id="textt" style="background-color: white;" placeholder="Сообщение к транзакции" maxlength="50">
+                    </form>
+                    
+                    <div class="line1">   <button id="cancelTransaction" style="border-radius: 0px 0px 0px 10px;">Отменить</button>    <button id="push" style="border-radius: 0px 0px 10px 0px;">Отправить</button> </div>
+                </div>
+            </div>
+
+            <div id="aclistModal" class="aklistmodal">
+                <div class="aklistmodal-box">
+                    <div class="list" id="aklist"></div>
+                    <button id="aklistCloseBtn">Закрыть</button>
+                </div>
+            </div>
+
+
+            <div id="introModal" class="intro-modal">
+                <div class="intro-modal-box">
+                    <p id="introText">Текст появится здесь</p>
+                    <button id="introCloseBtn">Закрыть</button>
+                </div>
+            </div>
+
+        </main>
+
+        <footer>   <p id="versionInfo"></p>  </footer>
+
+        
+    </body>
+</html>
