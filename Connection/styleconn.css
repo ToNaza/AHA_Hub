@@ -757,6 +757,55 @@ main{
                 &.switching {
                     opacity: 0;
                 }
+
+                .contact-form{
+                    height: 100%;
+                    box-sizing: border-box;
+                    padding: 10px 15px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+
+                    .form-title{
+                        margin: 0;
+                        text-align: center;
+                    }
+
+                    input, textarea{
+                        width: 100%;
+                        box-sizing: border-box;
+                        padding: 6px 8px;
+                        border-radius: 10px;
+                        border: solid black 2px;
+                        font: inherit;
+                    }
+
+                    textarea{
+                        flex: 1;
+                        resize: none;
+                    }
+
+                    .form-status{
+                        margin: 0;
+                        min-height: 18px;
+                        text-align: center;
+                        font-size: 14px;
+
+                        &.ok{ color: #2f7d1f; }
+                        &.error{ color: #b3261e; }
+                    }
+
+                    button{
+                        padding: 8px;
+                        border-radius: 10px;
+                        border: solid black 2px;
+                        background-color: #0080e6;
+                        color: white;
+                        cursor: pointer;
+
+                        &:disabled{ opacity: 0.6; cursor: default; }
+                    }
+                }
             }
         }
 
@@ -792,4 +841,5 @@ footer{
     margin-top: 40px;
 }
 }
+
 
