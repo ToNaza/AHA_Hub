@@ -17,12 +17,16 @@ const ANON_KEY = process.env.SUPABASE_ANON_KEY;
 const BUCKET = 'arts';
 
 // ---------- Настройки (меняются здесь) ----------
-const HASHTAGS = [
-  'Арт', 'Мем',
-  'Интерн', 'Медсестра', 'Секретарь', 'Фельдшер', 'Психолог', 'Доктор',
-  'Пожарный', 'Охранник', 'Старшая_медсестра', 'Хирург', 'Секретный_агент',
-  'ОС',
+// Хештеги двумя блоками: тип публикации и всё остальное. Порядок здесь = порядок в посте
+const HASHTAG_GROUPS = [
+  ['Арт', 'Мем', 'Анимация'],
+  [
+    'Интерн', 'Медсестра', 'Секретарь', 'Фельдшер', 'Психолог', 'Доктор',
+    'Пожарный', 'Охранник', 'Старшая_медсестра', 'Хирург', 'Секретный_агент',
+    'ОС',
+  ],
 ];
+const HASHTAGS = HASHTAG_GROUPS.flat();
 // Откуда взято (выбирает модератор при планировании поста).
 // emojiId — id премиум-эмодзи (необязательно). Пока null — используется обычный эмодзи.
 const SOURCES = [
@@ -43,6 +47,7 @@ const REJECTED_KEEP_DAYS = 5;               // отклонённые / отме
 const PUBLISHED_KEEP_DAYS = 3;              // опубликованные живут столько дней
 const MAX_ATTEMPTS = 5;                     // сколько раз пробуем опубликовать
 const MAX_AUTHOR_TEXT = 50;
+const MAX_DESCRIPTION = 50;               // описание под медиа
 
 const MIME = {
   'image/jpeg': { ext: 'jpg', type: 'image' },
@@ -124,6 +129,13 @@ async function authenticate(req) {
   return user;
 }
 
+// Описание: необязательное, одной строкой, до MAX_DESCRIPTION символов
+function cleanDescription(value) {
+  const text = String(value || '').replace(/\s+/g, ' ').trim();
+  if (text.length > MAX_DESCRIPTION) throw new HttpError(400, `Описание длиннее ${MAX_DESCRIPTION} символов`);
+  return text;
+}
+
 function validateHashtags(input) {
   if (!Array.isArray(input)) throw new HttpError(400, 'Выберите хотя бы один хештег');
   const set = new Set(input.map(String));
@@ -196,6 +208,7 @@ function serialize(row, authors) {
     statusLabel: STATUS_LABELS[row.status] || row.status,
     anon: row.anon,
     hashtags: row.hashtags,
+    description: row.description || '',
     source: row.source,
     authorText: row.author_text,
     publishAt: row.publish_at,
@@ -211,9 +224,10 @@ function serialize(row, authors) {
 
 const meta = () => ({
   hashtags: HASHTAGS,
+  hashtagGroups: HASHTAG_GROUPS,
   sources: SOURCES.map((x) => ({ id: x.id, label: sourceLabel(x) })),
   suggestSource: sourceLabel(SUGGEST_SOURCE),
-  limits: { maxMedia: MAX_MEDIA, imageBytes: IMAGE_MAX_BYTES, videoBytes: VIDEO_MAX_BYTES, authorText: MAX_AUTHOR_TEXT },
+  limits: { maxMedia: MAX_MEDIA, imageBytes: IMAGE_MAX_BYTES, videoBytes: VIDEO_MAX_BYTES, authorText: MAX_AUTHOR_TEXT, description: MAX_DESCRIPTION },
 });
 
 // ---------- Действия пользователя ----------
@@ -244,6 +258,7 @@ const actions = {
 
   async create(body, user) {
     const hashtags = validateHashtags(body.hashtags);
+    const description = cleanDescription(body.description);
     const { count } = await supabase.from('arts')
       .select('id', { count: 'exact', head: true }).eq('author_id', user.id).eq('status', 'pending');
     if ((count || 0) >= MAX_PENDING_PER_USER) {
@@ -251,11 +266,11 @@ const actions = {
     }
     const media = await validateMedia(user.id, body.media);
     const { data, error } = await supabase.from('arts')
-      .insert({ kind: 'user', author_id: user.id, media, anon: !!body.anon, hashtags })
+      .insert({ kind: 'user', author_id: user.id, media, anon: !!body.anon, hashtags, description })
       .select('id').single();
     if (error) throw error;
     await markUsed(media.map((m) => m.path));
-    await sendLog(`Создана предложка творчества №${num(data.id)}`);
+    await sendLog(`✉️ Создана предложка творчества №${num(data.id)} - ${user.id}`);
     return { id: data.id, number: num(data.id) };
   },
 
@@ -280,10 +295,11 @@ const actions = {
       throw new HttpError(403, 'Эту заявку нельзя изменить');
     }
     const hashtags = validateHashtags(body.hashtags);
+    const description = cleanDescription(body.description);
     const oldPaths = art.media.map((m) => m.path);
     const media = await validateMedia(user.id, body.media, { existing: oldPaths });
     const { error } = await supabase.from('arts')
-      .update({ media, anon: !!body.anon, hashtags, updated_at: new Date().toISOString() })
+      .update({ media, anon: !!body.anon, hashtags, description, updated_at: new Date().toISOString() })
       .eq('id', art.id).eq('status', 'pending');
     if (error) throw error;
     const newPaths = media.map((m) => m.path);
@@ -300,6 +316,7 @@ const actions = {
     const { error } = await supabase.from('arts').delete().eq('id', art.id).eq('status', art.status);
     if (error) throw error;
     await removeFiles(art.media.map((m) => m.path));
+    if (modScheduled) await sendLog(`⭕️ Модератор ${user.id} отменил запланированный пост №${num(art.id)}`);
     return { ok: true };
   },
 
@@ -313,7 +330,7 @@ const actions = {
       .eq('id', art.id).eq('status', 'accepted').select('id');
     if (error) throw error;
     if (!data || !data.length) throw new HttpError(409, 'Заявка уже изменилась, обновите список');
-    await sendLog(`Принятая предложка №${num(art.id)} была отменена автором`);
+    await sendLog(`🚫 Принятая предложка №${num(art.id)} была отменена автором - ${user.id}`);
     return { ok: true };
   },
 
@@ -335,7 +352,9 @@ const actions = {
       .update(patch).eq('id', art.id).eq('status', 'pending').select('id');
     if (error) throw error;
     if (!data || !data.length) throw new HttpError(409, 'Заявка уже обработана');
-    await sendLog(`Предложка №${num(art.id)} ${body.decision === 'accept' ? 'принята' : 'отклонена'}`);
+    await sendLog(body.decision === 'accept'
+      ? `💌 Предложка №${num(art.id)} принята модератором - ${user.id}`
+      : `❌ Предложка №${num(art.id)} отклонена модератором - ${user.id}`);
     return { ok: true };
   },
 
@@ -349,20 +368,23 @@ const actions = {
       throw new HttpError(400, `Укажите автора (до ${MAX_AUTHOR_TEXT} символов)`);
     }
     const publishAt = validateFuture(body.publishAt);
+    const description = cleanDescription(body.description);
     const media = await validateMedia(user.id, body.media);
     const { data, error } = await supabase.from('arts')
       .insert({
-        kind: 'mod', author_id: user.id, media, hashtags, source: source.id,
+        kind: 'mod', author_id: user.id, media, hashtags, description, source: source.id,
         author_text: authorText, status: 'accepted', publish_at: publishAt,
       }).select('id').single();
     if (error) throw error;
     await markUsed(media.map((m) => m.path));
+    await sendLog(`🧮 Модератор ${user.id} запланировал пост №${num(data.id)}`);
     return { id: data.id, number: num(data.id) };
   },
 };
 
 // ---------- Публикация и очистка (вызывается планировщиком раз в минуту) ----------
 // Текст поста:
+//   <описание, если есть> + пустая строка
 //   Источник - ...
 //   Автор - ...
 //   Хештеги - #... #...
@@ -379,7 +401,8 @@ function buildCaption(row, author) {
     else authorLine = author && author.username ? '@' + author.username : (author && author.first_name) || 'Неизвестно';
   }
 
-  const prefix = 'Источник - ';
+  const head = row.description ? `${row.description}\n\n` : '';
+  const prefix = head + 'Источник - ';
   const text = `${prefix}${sourceLabel(src)}\nАвтор - ${authorLine}\nХештеги - ${row.hashtags.map((t) => '#' + t).join(' ')}`;
   const entities = [];
   if (src.emojiId) {
@@ -464,7 +487,7 @@ async function handleCron(req, res) {
       }).eq('id', row.id);
       if (giveUp) {
         result.failed++;
-        await sendLog(`Не удалось опубликовать пост №${num(row.id)} (${MAX_ATTEMPTS} попыток). Проверьте заявку на сайте`);
+        await sendLog(`⚠️ Не удалось опубликовать пост №${num(row.id)} (${MAX_ATTEMPTS} попыток). Проверьте заявку на сайте`);
       }
     }
   }

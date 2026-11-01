@@ -3,7 +3,7 @@
 (function () {
   const ALLOWED_TYPES = { 'image/jpeg': 'image', 'image/png': 'image', 'image/webp': 'image', 'video/mp4': 'video' };
   const ANON_HINT = 'Выберете "Анон" если не желаете что б под постом писали ваш ник как автора';
-  const BREAK_BEFORE = new Set(['Интерн', 'ОС']); // где в списке хештегов начинается новая строка
+  const BREAK_BEFORE = new Set(['ОС']); // где в списке хештегов начинается новая строка
 
   /* ---------- Мелкие помощники ---------- */
 
@@ -138,31 +138,38 @@
     };
   }
 
-  /* ---------- Выбор хештегов ---------- */
+  /* ---------- Выбор хештегов (группами-блоками) ---------- */
 
-  function createHashtagPicker({ tags, selected = [], readonly = false, onChange = () => {} }) {
+  function createHashtagPicker({ groups, selected = [], readonly = false, onChange = () => {} }) {
+    const all = groups.flat();
     const set = new Set(selected);
-    const el = h('div', { class: 'tag-picker' });
-    const buttons = [];
-    for (const tag of tags) {
-      if (readonly && !set.has(tag)) continue;
-      if (BREAK_BEFORE.has(tag) && el.childNodes.length) el.append(h('span', { class: 'tag-break' }));
-      const b = h(readonly ? 'span' : 'button', { class: 'tag' + (set.has(tag) ? ' selected' : ''), text: '#' + tag, ...(readonly ? {} : { type: 'button', 'aria-pressed': String(set.has(tag)) }) });
-      if (!readonly) {
-        b.addEventListener('click', () => {
-          if (set.has(tag)) set.delete(tag); else set.add(tag);
-          b.classList.toggle('selected', set.has(tag));
-          b.setAttribute('aria-pressed', String(set.has(tag)));
-          onChange();
+    const el = h('div', { class: 'tag-groups' });
+    for (const group of groups) {
+      const visible = readonly ? group.filter((t) => set.has(t)) : group;
+      if (!visible.length) continue; // в просмотре пустые блоки не показываем
+      const blk = h('div', { class: 'ui-block tag-picker' });
+      for (const tag of visible) {
+        if (BREAK_BEFORE.has(tag) && blk.childNodes.length) blk.append(h('span', { class: 'tag-break' }));
+        const b = h(readonly ? 'span' : 'button', {
+          class: 'tag' + (set.has(tag) ? ' selected' : ''), text: '#' + tag,
+          ...(readonly ? {} : { type: 'button', 'aria-pressed': String(set.has(tag)) }),
         });
+        if (!readonly) {
+          b.addEventListener('click', () => {
+            if (set.has(tag)) set.delete(tag); else set.add(tag);
+            b.classList.toggle('selected', set.has(tag));
+            b.setAttribute('aria-pressed', String(set.has(tag)));
+            onChange();
+          });
+        }
+        blk.append(b);
       }
-      buttons.push(b);
-      el.append(b);
+      el.append(blk);
     }
     const initialKey = [...set].sort().join('|');
     return {
       el,
-      getSelected: () => tags.filter((t) => set.has(t)),
+      getSelected: () => all.filter((t) => set.has(t)),
       isChanged: () => [...set].sort().join('|') !== initialKey,
     };
   }
@@ -170,7 +177,7 @@
   // Выбор ровно одного варианта (откуда взято)
   function createSingleChoice(options) {
     let value = null;
-    const el = h('div', { class: 'tag-picker source-picker' });
+    const el = h('div', { class: 'ui-block tag-picker source-picker' });
     const btns = options.map((o) => {
       const b = h('button', { type: 'button', class: 'tag', text: o.label, 'aria-pressed': 'false' });
       b.addEventListener('click', () => {
@@ -191,9 +198,26 @@
     box.addEventListener('change', () => { label.textContent = box.checked ? 'Анон' : 'Не анон'; onChange(); });
     const hint = h('div', { class: 'hint', text: ANON_HINT });
     const hintBtn = h('button', { type: 'button', class: 'hint-btn', 'aria-label': 'Подсказка', text: '¡', onclick: () => hint.classList.toggle('show') });
-    const el = h('div', { class: 'anon-row' }, h('label', { class: 'anon-label' }, box, label), hintBtn, hint);
+    const el = h('div', { class: 'ui-block anon-row' }, h('label', { class: 'anon-label' }, box, label), hintBtn, hint);
     return { el, isAnon: () => box.checked };
   }
+
+  /* ---------- Описание под медиа и блок «медиа» ---------- */
+
+  function createDescription({ meta, value = '', readonly = false, onChange = () => {} }) {
+    if (readonly) {
+      return { el: value ? h('p', { class: 'art-description', text: value }) : null, getValue: () => value, isChanged: () => false };
+    }
+    const input = h('input', {
+      type: 'text', class: 'art-description-input', maxlength: meta.limits.description,
+      placeholder: `Описание (до ${meta.limits.description} символов)`,
+    });
+    input.value = value;
+    input.addEventListener('input', onChange);
+    return { el: input, getValue: () => input.value.trim(), isChanged: () => input.value.trim() !== value, isEmpty: () => !input.value.trim() };
+  }
+
+  const mediaBlock = (picker, desc) => h('div', { class: 'ui-block media-block' }, picker.el, desc.el);
 
   /* ---------- Форма «Предложка» ---------- */
 
@@ -205,10 +229,11 @@
     getMeta().then((meta) => {
       if (!form.isConnected) return; // пока грузилось, форму успели переключить
       const picker = createMediaPicker({ meta });
+      const desc = createDescription({ meta });
       const anon = createAnonRow({});
-      const tags = createHashtagPicker({ tags: meta.hashtags });
+      const tags = createHashtagPicker({ groups: meta.hashtagGroups });
       const send = h('button', { type: 'submit', class: 'send-btn', text: 'Отправить' });
-      form.replaceChildren(title, picker.el, anon.el, tags.el, send);
+      form.replaceChildren(title, mediaBlock(picker, desc), anon.el, tags.el, send);
 
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -220,7 +245,7 @@
         toast('Загрузка файлов...', 'info');
         try {
           const media = await picker.upload();
-          const r = await api('create', { media, anon: anon.isAnon(), hashtags: selected });
+          const r = await api('create', { media, anon: anon.isAnon(), hashtags: selected, description: desc.getValue() });
           toast(`Предложка №${r.number} отправлена`, 'ok');
           picker.destroy();
           if (form.isConnected) renderSuggestForm(form.parentElement);
@@ -238,11 +263,19 @@
 
   /* ---------- Окно заявок #arts_menu ---------- */
 
-  const state = { menu: null, box: null, isMod: false, meta: null, cleanup: null };
+  const state = { menu: null, box: null, isMod: false, meta: null, cleanup: null, view: 'closed', isDirty: () => false };
 
   function setView(...nodes) {
     if (state.cleanup) { state.cleanup(); state.cleanup = null; }
+    state.isDirty = () => false;
     state.box.replaceChildren(...nodes);
+  }
+
+  // Клик за окном / Esc = «на уровень назад»: из просмотра и планирования — в список, из списка — закрыть
+  function stepBack() {
+    if (state.view === 'closed') return;
+    if (state.view !== 'list' && state.isDirty() && !confirm('Выйти без сохранения изменений?')) return;
+    if (state.view === 'list') closeMenu(); else showList();
   }
 
   function openMenu() {
@@ -254,10 +287,12 @@
   function closeMenu() {
     if (typeof closeModalFade === 'function') closeModalFade(state.menu);
     else { state.menu.classList.remove('active'); state.menu.style.display = 'none'; }
+    state.view = 'closed';
     setView();
   }
 
   async function showList() {
+    state.view = 'list';
     setView(h('p', { class: 'form-loading', text: 'Загрузка...' }));
     try {
       const data = await api('list');
@@ -309,13 +344,14 @@
     const isModView = state.isMod;
     const editable = !isModView && art.kind === 'user' && art.status === 'pending';
 
-    let picker, anon, tags;
+    let picker, anon, tags, desc;
     const actions = h('div', { class: 'art-actions' });
     const back = h('button', { type: 'button', class: 'arts-back', text: 'Назад', onclick: showList });
 
+    const isChanged = () => picker.isChanged() || tags.isChanged() || desc.isChanged() || anon.isAnon() !== art.anon;
     const refreshButtons = () => {
       if (!editable) return;
-      const changed = picker.isChanged() || tags.isChanged() || anon.isAnon() !== art.anon;
+      const changed = isChanged();
       actions.replaceChildren(back, changed
         ? h('button', { type: 'button', class: 'arts-save', text: 'Сохранить', onclick: save })
         : h('button', { type: 'button', class: 'arts-delete', text: 'Удалить', onclick: remove }));
@@ -323,7 +359,8 @@
 
     picker = createMediaPicker({ meta, initial: art.media, readonly: !editable, onChange: refreshButtons });
     anon = createAnonRow({ checked: art.anon, readonly: !editable, onChange: refreshButtons });
-    tags = createHashtagPicker({ tags: meta.hashtags, selected: art.hashtags, readonly: !editable, onChange: refreshButtons });
+    desc = createDescription({ meta, value: art.description || '', readonly: !editable, onChange: refreshButtons });
+    tags = createHashtagPicker({ groups: meta.hashtagGroups, selected: art.hashtags, readonly: !editable, onChange: refreshButtons });
 
     async function save() {
       const selected = tags.getSelected();
@@ -332,7 +369,7 @@
       toast('Сохранение...', 'info');
       guarded(async () => {
         const media = await picker.upload();
-        await api('update', { id: art.id, media, anon: anon.isAnon(), hashtags: selected });
+        await api('update', { id: art.id, media, anon: anon.isAnon(), hashtags: selected, description: desc.getValue() });
       }, 'Изменения сохранены');
     }
     function remove() {
@@ -355,7 +392,7 @@
     }
     if (art.publishAt && ['accepted', 'publishing', 'failed'].includes(art.status)) info.push(line('Публикация:', fmtDate(art.publishAt)));
 
-    const body = [picker.el, ...(art.kind === 'user' ? [anon.el] : []), tags.el];
+    const body = [mediaBlock(picker, desc), ...(art.kind === 'user' ? [anon.el] : []), tags.el];
 
     if (editable) {
       refreshButtons();
@@ -388,16 +425,20 @@
       actions.append(back);
     }
 
-    setView(h('div', { class: 'art-detail' }, ...head, ...info, ...body), actions);
+    const infoBlock = info.length ? [h('div', { class: 'ui-block art-info' }, ...info)] : [];
+    state.view = 'detail';
+    setView(h('div', { class: 'art-detail' }, ...head, ...infoBlock, ...body), actions);
     state.cleanup = () => picker.destroy();
+    state.isDirty = () => editable && isChanged();
   }
 
   function renderCompose() {
     const meta = state.meta;
     const picker = createMediaPicker({ meta });
+    const desc = createDescription({ meta });
     const source = createSingleChoice(meta.sources);
     const author = h('input', { type: 'text', class: 'art-author', placeholder: 'Автор', maxlength: meta.limits.authorText });
-    const tags = createHashtagPicker({ tags: meta.hashtags });
+    const tags = createHashtagPicker({ groups: meta.hashtagGroups });
     const when = h('input', { type: 'datetime-local', min: toLocalInput(new Date()) });
     when.value = toLocalInput(new Date(Date.now() + 3600000));
 
@@ -414,7 +455,7 @@
         const media = await picker.upload();
         const r = await api('schedule', {
           media, hashtags: selected, source: source.getValue(), authorText: author.value.trim(),
-          publishAt: new Date(when.value).toISOString(),
+          description: desc.getValue(), publishAt: new Date(when.value).toISOString(),
         });
         toast(`Пост №${r.number} запланирован`, 'ok');
         showList();
@@ -424,27 +465,36 @@
       }
     } });
 
+    state.view = 'compose';
     setView(
       h('div', { class: 'art-detail' },
         h('h3', { class: 'form-title', text: 'Запланировать пост' }),
-        picker.el,
-        h('p', { class: 'art-line', text: 'Откуда взято:' }), source.el,
-        author,
+        mediaBlock(picker, desc),
+        h('div', { class: 'ui-block' }, h('p', { class: 'art-line', text: 'Откуда взято:' }), source.el, author),
         tags.el,
-        h('label', { class: 'art-line', text: 'Когда опубликовать: ' }, when)),
+        h('div', { class: 'ui-block' }, h('label', { class: 'art-line', text: 'Когда опубликовать: ' }, when))),
       h('div', { class: 'art-actions' }, h('button', { type: 'button', class: 'arts-back', text: 'Назад', onclick: showList }), send));
     state.cleanup = () => picker.destroy();
+    state.isDirty = () => picker.count() > 0 || !!author.value.trim() || !desc.isEmpty() || !!source.getValue() || tags.getSelected().length > 0;
   }
 
   function setupArtsMenu() {
     const btn = document.getElementById('btnartconsole');
     const menu = document.getElementById('arts_menu');
-    if (!btn || !menu) return;
+    if (!btn || !menu || menu.dataset.artsInit) return; // повторный вызов не должен дублировать обработчики
+    menu.dataset.artsInit = '1';
     state.menu = menu;
     state.box = menu.querySelector('.arts_menu_box') || menu;
     btn.addEventListener('click', openMenu);
-    // Клик за пределами окна закрывает его
-    menu.addEventListener('click', (e) => { if (e.target === menu) closeMenu(); });
+    // Клик за пределами окна = на уровень назад. Считаем клик только если и нажали, и отпустили на фоне
+    // (иначе выделение текста мышью, закончившееся за краем окна, закрывало бы его)
+    let downOnBackdrop = false;
+    menu.addEventListener('mousedown', (e) => { downOnBackdrop = e.target === menu; });
+    menu.addEventListener('click', (e) => { if (e.target === menu && downOnBackdrop) stepBack(); downOnBackdrop = false; });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape' || state.view === 'closed' || document.querySelector('.lightbox')) return;
+      stepBack();
+    });
   }
 
   document.addEventListener('DOMContentLoaded', setupArtsMenu);
