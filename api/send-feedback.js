@@ -1,4 +1,4 @@
-    const jwt = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
     const { createClient } = require('@supabase/supabase-js');
 
     const supabase = createClient(
@@ -78,9 +78,10 @@
         // Юзернейм и ID берём только из базы — подделать их с клиента нельзя
         const usernameText = user.username ? '@' + user.username : 'нет username';
         const text =
+        `Связь с модерацией от:\n` +
         `Username - ${usernameText} | ID - ${user.id}\n` +
-        `Heading - ${heading}\n` +
-        `Description - ${description}`;
+        `Заголовок - ${heading}\n` +
+        `Текст - ${description}`;
 
         // Без parse_mode: пользовательский текст уходит как обычный текст
         const tgRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {

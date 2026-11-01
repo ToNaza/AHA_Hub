@@ -1,5 +1,25 @@
 const SWITCH_FADE_MS = 200; // должно совпадать с transition в CSS (.forms)
 
+// ---------- Уведомления на сайте ----------
+// showToast('текст', 'ok' | 'error' | 'info')
+function showToast(text, kind = 'info', ms = 3500) {
+  let stack = document.getElementById('toastStack');
+  if (!stack) {
+    stack = document.createElement('div');
+    stack.id = 'toastStack';
+    document.body.appendChild(stack);
+  }
+  const el = document.createElement('div');
+  el.className = 'toast ' + kind;
+  el.textContent = text; // textContent: текст не может внедрить HTML
+  stack.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => {
+    el.classList.remove('show');
+    setTimeout(() => el.remove(), 300);
+  }, ms);
+}
+
 // ---------- Форма 1: «Связь с модерацией» ----------
 function renderContactForm(box) {
   box.innerHTML = `
@@ -7,7 +27,6 @@ function renderContactForm(box) {
       <h3 class="form-title">Связь с модерацией</h3>
       <input type="text" id="contactHeading" placeholder="Тема" maxlength="50" required>
       <textarea id="contactDescription" placeholder="Описание" maxlength="300" required></textarea>
-      <p class="form-status" id="contactStatus"></p>
       <button type="submit" id="contactSend">Отправить</button>
     </form>
   `;
@@ -15,25 +34,18 @@ function renderContactForm(box) {
   const form = box.querySelector('.contact-form');
   const heading = box.querySelector('#contactHeading');
   const description = box.querySelector('#contactDescription');
-  const status = box.querySelector('#contactStatus');
   const sendBtn = box.querySelector('#contactSend');
-
-  function setStatus(text, kind) {
-    status.textContent = text;
-    status.className = 'form-status' + (kind ? ' ' + kind : '');
-  }
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const h = heading.value.trim();
     const d = description.value.trim();
     if (!h || !d) {
-      setStatus('Заполните тему и описание', 'error');
+      showToast('Заполните тему и описание', 'error');
       return;
     }
 
     sendBtn.disabled = true;
-    setStatus('Отправка...', '');
     try {
       const res = await fetch('/api/send-feedback', {
         method: 'POST',
@@ -45,12 +57,12 @@ function renderContactForm(box) {
       if (res.ok) {
         heading.value = '';
         description.value = '';
-        setStatus('Отправлено ✓', 'ok');
+        showToast('Сообщение отправлено', 'ok');
       } else {
-        setStatus(data.error === 'USER_BLOCKED' ? 'Доступ ограничен' : (data.error || 'Ошибка отправки'), 'error');
+        showToast(data.error === 'USER_BLOCKED' ? 'Доступ ограничен' : (data.error || 'Ошибка отправки'), 'error');
       }
     } catch (err) {
-      setStatus('Нет связи с сервером', 'error');
+      showToast('Нет связи с сервером', 'error');
     } finally {
       sendBtn.disabled = false;
     }
@@ -59,8 +71,11 @@ function renderContactForm(box) {
 
 const FORM_RENDERERS = {
   contact: renderContactForm,
-  // Заготовка. Допишем, когда будет готово окно #btnartconsole и описана логика.
-  suggest: (box) => { box.innerHTML = '<p>Форма «Предложка» появится здесь</p>'; },
+  // Сама форма живёт в arts.js (там же окно заявок)
+  suggest: (box) => {
+    if (typeof renderSuggestForm === 'function') renderSuggestForm(box);
+    else box.textContent = 'Не удалось загрузить форму';
+  },
 };
 
 let switchTimer = null;

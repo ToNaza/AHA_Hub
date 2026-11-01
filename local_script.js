@@ -467,10 +467,6 @@ function setupBankCard() {
 function updateAdminUI() {
   const btnBan = document.getElementById('btnban');
   if (btnBan) btnBan.style.display = isAdmin ? 'block' : 'none';
-
-  // Консоль артов: модерация и админы
-  const btnArt = document.getElementById('btnartconsole');
-  if (btnArt) btnArt.style.display = (isAdmin || isModerator) ? 'block' : 'none';
 }
 
 function setBlockButtonState(btn, blocked) {
