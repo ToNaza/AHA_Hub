@@ -347,6 +347,7 @@
     if (isModView && art.author) {
       info.push(line(art.kind === 'mod' ? 'Запланировал:' : 'Автор:', `${art.author.firstName || '—'} | ${art.author.username ? '@' + art.author.username : 'нет username'} | ID ${art.author.id}`));
     }
+    if (art.kind === 'user') info.push(line('Источник -', meta.suggestSource));
     if (art.kind === 'mod') {
       const src = meta.sources.find((s) => s.id === art.source);
       info.push(line('Откуда взято -', src ? src.label : ''));

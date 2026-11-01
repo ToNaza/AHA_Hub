@@ -23,13 +23,17 @@ const HASHTAGS = [
   'Пожарный', 'Охранник', 'Старшая_медсестра', 'Хирург', 'Секретный_агент',
   'ОС',
 ];
+// Откуда взято (выбирает модератор при планировании поста).
+// emojiId — id премиум-эмодзи (необязательно). Пока null — используется обычный эмодзи.
 const SOURCES = [
-  { id: 'telegram',  label: '💬 Из телеграма' },
-  { id: 'tiktok',    label: '🎥 Из тиктока' },
-  { id: 'pinterest', label: '📷 Из пинтереста' },
-  { id: 'browser',   label: '🔍 Из браузеров' },
-  { id: 'suggest',   label: '⭐ Из предложки' },
+  { id: 'telegram',  emoji: '💬', name: 'Из телеграма',   emojiId: '5285350148451344065' },
+  { id: 'tiktok',    emoji: '🎥', name: 'Из тиктока',     emojiId: '5280662183057825163' },
+  { id: 'pinterest', emoji: '📷', name: 'Из пинтереста',  emojiId: '5303183810442044150' },
+  { id: 'browser',   emoji: '🔍', name: 'Из браузеров',   emojiId: '5310180286397423397' },
 ];
+// Для заявок из «Предложки» источник ставится автоматически и в список модератора не входит
+const SUGGEST_SOURCE = { id: 'suggest', emoji: '⭐', name: 'Из предложки', emojiId: '5429494001138944224' };
+const sourceLabel = (s) => `${s.emoji} ${s.name}`;
 const MAX_MEDIA = 5;
 const IMAGE_MAX_BYTES = 5 * 1024 * 1024;    // лимит Telegram для фото по ссылке
 const VIDEO_MAX_BYTES = 20 * 1024 * 1024;   // лимит Telegram для видео по ссылке
@@ -207,7 +211,8 @@ function serialize(row, authors) {
 
 const meta = () => ({
   hashtags: HASHTAGS,
-  sources: SOURCES,
+  sources: SOURCES.map((x) => ({ id: x.id, label: sourceLabel(x) })),
+  suggestSource: sourceLabel(SUGGEST_SOURCE),
   limits: { maxMedia: MAX_MEDIA, imageBytes: IMAGE_MAX_BYTES, videoBytes: VIDEO_MAX_BYTES, authorText: MAX_AUTHOR_TEXT },
 });
 
@@ -337,7 +342,7 @@ const actions = {
   async schedule(body, user) {
     if (!user.isMod) throw new HttpError(403, 'Нет доступа');
     const hashtags = validateHashtags(body.hashtags);
-    const source = SOURCES.find((s) => s.id === body.source);
+    const source = SOURCES.find((x) => x.id === body.source);
     if (!source) throw new HttpError(400, 'Выберите, откуда взято');
     const authorText = String(body.authorText || '').trim();
     if (!authorText || authorText.length > MAX_AUTHOR_TEXT) {
@@ -357,20 +362,33 @@ const actions = {
 };
 
 // ---------- Публикация и очистка (вызывается планировщиком раз в минуту) ----------
+// Текст поста:
+//   Источник - ...
+//   Автор - ...
+//   Хештеги - #... #...
+// Возвращает текст и список entities (для премиум-эмодзи, если у источника задан emojiId)
 function buildCaption(row, author) {
-  const tags = row.hashtags.map((t) => '#' + t).join(' ');
-  let head;
+  let src;
+  let authorLine;
   if (row.kind === 'mod') {
-    const src = SOURCES.find((s) => s.id === row.source);
-    head = `Откуда взято - ${src ? src.label : ''}, Автор - ${row.author_text}`;
-  } else if (row.anon) {
-    head = 'Автор - Решил остаться анонимным';
+    src = SOURCES.find((x) => x.id === row.source) || SOURCE_FALLBACK;
+    authorLine = row.author_text;
   } else {
-    const name = author && author.username ? '@' + author.username : (author && author.first_name) || 'Неизвестно';
-    head = `Автор - ${name}`;
+    src = SUGGEST_SOURCE;
+    if (row.anon) authorLine = 'Решил остаться анонимным';
+    else authorLine = author && author.username ? '@' + author.username : (author && author.first_name) || 'Неизвестно';
   }
-  return `${head}\n\n${tags}`;
+
+  const prefix = 'Источник - ';
+  const text = `${prefix}${sourceLabel(src)}\nАвтор - ${authorLine}\nХештеги - ${row.hashtags.map((t) => '#' + t).join(' ')}`;
+  const entities = [];
+  if (src.emojiId) {
+    // offset и length Telegram считает в UTF-16 — как и длина строки в JS
+    entities.push({ type: 'custom_emoji', offset: prefix.length, length: src.emoji.length, custom_emoji_id: src.emojiId });
+  }
+  return { text, entities };
 }
+const SOURCE_FALLBACK = { id: '', emoji: '', name: '', emojiId: null };
 
 async function publishArt(row) {
   let author = null;
@@ -378,21 +396,33 @@ async function publishArt(row) {
     const { data } = await supabase.from('users').select('username, first_name').eq('id', row.author_id).maybeSingle();
     author = data;
   }
-  const caption = buildCaption(row, author);
+  const { text: caption, entities } = buildCaption(row, author);
   const items = row.media.map((m) => ({ type: m.type === 'video' ? 'video' : 'photo', url: publicUrl(m.path) }));
 
-  if (items.length === 1) {
-    const it = items[0];
-    if (it.type === 'video') {
-      await telegram('sendVideo', { chat_id: CHANNEL_ID, video: it.url, caption, supports_streaming: true });
+  const send = async (withEntities) => {
+    const ce = withEntities && entities.length ? { caption_entities: entities } : {};
+    if (items.length === 1) {
+      const it = items[0];
+      if (it.type === 'video') {
+        await telegram('sendVideo', { chat_id: CHANNEL_ID, video: it.url, caption, supports_streaming: true, ...ce });
+      } else {
+        await telegram('sendPhoto', { chat_id: CHANNEL_ID, photo: it.url, caption, ...ce });
+      }
     } else {
-      await telegram('sendPhoto', { chat_id: CHANNEL_ID, photo: it.url, caption });
+      await telegram('sendMediaGroup', {
+        chat_id: CHANNEL_ID,
+        media: items.map((it, i) => ({ type: it.type, media: it.url, ...(i === 0 ? { caption, ...ce } : {}) })),
+      });
     }
-  } else {
-    await telegram('sendMediaGroup', {
-      chat_id: CHANNEL_ID,
-      media: items.map((it, i) => ({ type: it.type, media: it.url, ...(i === 0 ? { caption } : {}) })),
-    });
+  };
+
+  try {
+    await send(true);
+  } catch (err) {
+    // Если Telegram не принял премиум-эмодзи — публикуем с обычным, пост не должен потеряться
+    if (!entities.length) throw err;
+    console.error('custom emoji rejected, retrying with plain emoji:', err.message);
+    await send(false);
   }
 }
 

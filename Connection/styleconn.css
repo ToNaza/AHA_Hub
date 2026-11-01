@@ -751,88 +751,87 @@ main{
                 background-color: rgba(185, 185, 185, 0.541);
                 transition: opacity 0.2s ease;
 
+                /* Общий вид содержимого форм (Связь / Предложка) */
+                font-family: 'Jura', sans-serif;
+                font-weight: 600;
+                color: #14181c;
+                --ui-text: #14181c;
+                --ui-muted: rgba(20, 24, 28, 0.6);
+                --ui-field: rgba(255, 255, 255, 0.78);
+                --ui-line: rgba(20, 24, 28, 0.2);
+                --ui-chip: rgba(255, 255, 255, 0.7);
+
                 &.switching {
                     opacity: 0;
                 }
 
-                .contact-form{
+                .contact-form, .suggest-form{
                     height: 100%;
-                    box-sizing: border-box;
-                    padding: 10px 15px;
+                    padding: 14px 18px;
                     display: flex;
                     flex-direction: column;
-                    gap: 8px;
+                    gap: 10px;
+                    scrollbar-width: thin;
+                }
 
-                    .form-title{
-                        margin: 0;
-                        text-align: center;
+                /* .forms фиксированной высоты — форма «Предложка» внутри прокручивается */
+                .suggest-form{ overflow-y: auto; }
+
+                .form-title{
+                    margin: 0;
+                    text-align: center;
+                    font-size: 20px;
+                    letter-spacing: 0.5px;
+                }
+
+                .form-loading{
+                    margin: 10px 0;
+                    text-align: center;
+                    color: var(--ui-muted);
+                }
+
+                input[type=text], textarea{
+                    width: 100%;
+                    padding: 9px 12px;
+                    border-radius: 12px;
+                    border: 1px solid var(--ui-line);
+                    background-color: var(--ui-field);
+                    color: var(--ui-text);
+                    font: inherit;
+                    outline: none;
+                    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+                    &::placeholder{ color: var(--ui-muted); }
+                    &:focus{
+                        border-color: #75ab31;
+                        box-shadow: 0 0 0 3px rgba(117, 171, 49, 0.25);
                     }
+                }
 
-                    input, textarea{
-                        width: 100%;
-                        box-sizing: border-box;
-                        padding: 6px 8px;
-                        border-radius: 10px;
-                        border: solid black 2px;
-                        font: inherit;
-                    }
+                textarea{
+                    flex: 1;
+                    min-height: 80px;
+                    resize: none;
+                }
 
-                    textarea{
-                        flex: 1;
-                        resize: none;
-                    }
+                button[type=submit]{
+                    padding: 10px 18px;
+                    border: none;
+                    border-radius: 12px;
+                    background-color: #3f8fd6;
+                    color: white;
+                    font: inherit;
+                    font-weight: 700;
+                    cursor: pointer;
+                    transition: filter 0.15s ease, transform 0.1s ease;
 
-                    .form-status{
-                        margin: 0;
-                        min-height: 18px;
-                        text-align: center;
-                        font-size: 14px;
-
-                        &.ok{ color: #2f7d1f; }
-                        &.error{ color: #b3261e; }
-                    }
-
-                    button{
-                        padding: 8px;
-                        border-radius: 10px;
-                        border: solid black 2px;
-                        background-color: #0080e6;
-                        color: white;
-                        cursor: pointer;
-
-                        &:disabled{ opacity: 0.6; cursor: default; }
-                    }
+                    &:hover{ filter: brightness(1.1); }
+                    &:active{ transform: scale(0.98); }
+                    &:disabled{ opacity: 0.55; cursor: default; filter: none; transform: none; }
                 }
             }
         }
-    
-    
-    .arts_menu{
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: #0000007c;
-        backdrop-filter: blur(5px);
 
-        display: none;
-        justify-content: center;
-        align-items: center;
-
-        .arts_menu_box{
-            width: 400px;
-            max-width: 600px;
-
-            margin: 5px;
-            background-color: rgba(243, 227, 227, 0.822);
-            border-radius: 10px;
-            backdrop-filter: blur(35px);
-            padding: 20px;
-
-            
-            }
-    }
 }
 
 
@@ -867,97 +866,106 @@ footer{
 }
 
 
-#toastStack{
-    position: fixed;
-    top: 15px;
-    right: 15px;
-    z-index: 10000;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    pointer-events: none;
- 
-    .toast{
-        max-width: 300px;
-        padding: 10px 14px;
-        border-radius: 10px;
-        border: solid black 2px;
-        background-color: #6ca9db;
-        color: white;
-        opacity: 0;
-        transform: translateX(20px);
-        transition: opacity 0.3s ease, transform 0.3s ease;
- 
-        &.show{ opacity: 1; transform: translateX(0); }
-        &.ok{ background-color: #2f7d1f; }
-        &.error{ background-color: #b3261e; }
-    }
-}
- 
-
-/* Вставить на верхнем уровне styleconn.css (вне других блоков), например в самый конец.
-   Внешний вид — примерный, меняй как хочешь, но названия классов не переименовывай: на них завязан arts.js */
+/* ===================================================================
+   Уведомления, форма «Предложка», окно заявок #arts_menu
+   Цвета и размеры меняются здесь; названия классов не переименовывать —
+   на них завязаны connection.js и arts.js
+   =================================================================== */
 
 [hidden]{ display: none !important; }
 
-/* ---------- Форма «Предложка» внутри .forms ---------- */
-/* .forms имеет фиксированную высоту 350px — форма внутри прокручивается */
-.suggest-form{
-    height: 100%;
-    box-sizing: border-box;
-    padding: 10px 15px;
-    overflow-y: auto;
+/* ---------- Уведомления ---------- */
+#toastStack{
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 10000;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
+    pointer-events: none;
 
-    .form-title{ margin: 0; text-align: center; }
-    .form-loading{ text-align: center; margin: 10px 0; }
-
-    .send-btn{
-        padding: 8px;
-        border-radius: 10px;
-        border: solid black 2px;
-        background-color: #0080e6;
+    .toast{
+        max-width: 320px;
+        padding: 12px 16px;
+        border-radius: 12px;
+        border-left: 4px solid #6ca9db;
+        background-color: rgba(28, 32, 36, 0.92);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
         color: white;
-        cursor: pointer;
-        &:disabled{ opacity: 0.6; cursor: default; }
+        font-family: 'Jura', sans-serif;
+        font-weight: 600;
+        opacity: 0;
+        transform: translateX(24px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+
+        &.show{ opacity: 1; transform: translateX(0); }
+        &.ok{ border-left-color: #75ab31; }
+        &.error{ border-left-color: #e5534b; }
     }
 }
 
 /* ---------- Медиа: квадраты с горизонтальной прокруткой ---------- */
 .media-strip{
     display: flex;
-    gap: 8px;
+    gap: 10px;
+    padding: 2px 2px 8px;
     overflow-x: auto;
-    padding-bottom: 6px;
-    min-height: 74px;
+    scrollbar-width: thin;
 
     .media-tile, .media-add{
-        flex: 0 0 70px;
-        width: 70px;
-        height: 70px;
-        border-radius: 10px;
-        border: solid black 2px;
-        box-sizing: border-box;
-        overflow: hidden;
         position: relative;
+        flex: 0 0 72px;
+        width: 72px;
+        height: 72px;
+        border-radius: 12px;
+        overflow: hidden;
         cursor: pointer;
-        background-color: rgba(255,255,255,0.5);
+    }
+
+    .media-tile{
+        border: 1px solid var(--ui-line, rgba(0, 0, 0, 0.2));
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 
         img, video{ width: 100%; height: 100%; object-fit: cover; display: block; }
     }
-    .media-add{ font-size: 32px; line-height: 1; }
-    .media-badge{
-        position: absolute; left: 4px; bottom: 2px;
-        color: white; font-size: 14px; text-shadow: 0 0 3px black;
+
+    .media-add{
+        border: 2px dashed var(--ui-line, rgba(0, 0, 0, 0.3));
+        background-color: var(--ui-field, rgba(255, 255, 255, 0.5));
+        color: var(--ui-muted, rgba(0, 0, 0, 0.6));
+        font-size: 30px;
+        line-height: 1;
+        transition: border-color 0.15s ease, color 0.15s ease;
+
+        &:hover{ border-color: #75ab31; color: #75ab31; }
     }
+
+    .media-badge{
+        position: absolute;
+        left: 6px;
+        bottom: 4px;
+        color: white;
+        font-size: 13px;
+        text-shadow: 0 0 4px black;
+    }
+
     .media-remove{
-        position: absolute; top: 2px; right: 2px;
-        width: 20px; height: 20px; padding: 0;
-        border-radius: 50%; border: none;
-        background-color: rgba(0,0,0,0.65); color: white;
-        font-size: 12px; cursor: pointer;
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        width: 22px;
+        height: 22px;
+        padding: 0;
+        border: none;
+        border-radius: 50%;
+        background-color: rgba(0, 0, 0, 0.7);
+        color: white;
+        font-size: 11px;
+        cursor: pointer;
+
+        &:hover{ background-color: #e5534b; }
     }
 }
 
@@ -966,21 +974,42 @@ footer{
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 
-    .anon-label{ display: flex; align-items: center; gap: 6px; cursor: pointer; }
-    .hint-btn{
-        width: 22px; height: 22px; padding: 0;
-        border-radius: 50%; border: solid black 2px;
-        background-color: #6ca9db; cursor: pointer;
+    .anon-label{
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+
+        input{ width: 18px; height: 18px; accent-color: #75ab31; cursor: pointer; }
     }
+
+    .hint-btn{
+        width: 24px;
+        height: 24px;
+        padding: 0;
+        border: 1px solid var(--ui-line, rgba(0, 0, 0, 0.3));
+        border-radius: 50%;
+        background-color: var(--ui-field, rgba(255, 255, 255, 0.6));
+        color: inherit;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+
+        &:hover{ background-color: #6ca9db; color: white; }
+    }
+
     .hint{
         display: none;
         flex-basis: 100%;
-        padding: 6px 8px;
-        border-radius: 8px;
-        background-color: rgba(255,255,255,0.8);
+        padding: 8px 12px;
+        border: 1px solid var(--ui-line, rgba(0, 0, 0, 0.2));
+        border-radius: 10px;
+        background-color: var(--ui-field, rgba(255, 255, 255, 0.7));
         font-size: 13px;
+
         &.show{ display: block; }
     }
 }
@@ -992,104 +1021,157 @@ footer{
     gap: 6px;
 
     .tag-break{ flex-basis: 100%; height: 0; }
+
     .tag{
-        padding: 3px 8px;
-        border-radius: 12px;
-        border: solid black 2px;
-        background-color: rgba(255,255,255,0.6);
-        cursor: pointer;
+        padding: 4px 11px;
+        border: 1px solid var(--ui-line, rgba(0, 0, 0, 0.2));
+        border-radius: 999px;
+        background-color: var(--ui-chip, rgba(255, 255, 255, 0.7));
+        color: var(--ui-text, #14181c);
         font: inherit;
         font-size: 14px;
-        &.selected{ background-color: #75ab31; color: white; }
+        cursor: pointer;
+        transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+
+        &:hover{ transform: translateY(-1px); border-color: #75ab31; }
+        &.selected{ background-color: #75ab31; border-color: #75ab31; color: white; }
     }
 }
 
 /* ---------- Окно заявок #arts_menu ---------- */
-/* Нужно для плавного открытия через openModalFade/closeModalFade (opacity + класс .active) */
 #arts_menu{
+    --ui-text: #f2f4f6;
+    --ui-muted: rgba(255, 255, 255, 0.6);
+    --ui-field: rgba(255, 255, 255, 0.1);
+    --ui-line: rgba(255, 255, 255, 0.22);
+    --ui-chip: rgba(255, 255, 255, 0.1);
+
+    /* display переключает openModalFade/closeModalFade, плавность даёт opacity + .active */
     display: none;
     position: fixed;
     inset: 0;
     z-index: 900;
     align-items: center;
     justify-content: center;
-    background-color: rgba(0,0,0,0.5);
+    background-color: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(6px);
     opacity: 0;
     transition: opacity 0.2s ease;
+
     &.active{ opacity: 1; }
 
     .arts_menu_box{
-        width: 500px;
-        max-width: 90vw;
-        max-height: 80vh;
-        box-sizing: border-box;
+        width: 480px;
+        max-width: 92vw;
+        max-height: 82vh;
+        padding: 18px;
         overflow-y: auto;
-        padding: 12px;
-        border-radius: 15px;
-        border: #75ab31 solid 3px;
-        background-color: rgb(150,150,150);
+        scrollbar-width: thin;
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 18px;
+        background-color: rgba(28, 32, 36, 0.88);
+        backdrop-filter: blur(30px);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+        color: var(--ui-text);
+        font-family: 'Jura', sans-serif;
+        font-weight: 600;
     }
 
-    .form-loading{ text-align: center; margin: 10px 0; }
+    .form-title{ margin: 0; text-align: center; font-size: 20px; letter-spacing: 0.5px; }
+    .form-loading{ margin: 10px 0; text-align: center; color: var(--ui-muted); }
 
     /* список заявок */
-    .arts_list{ display: flex; flex-direction: column; gap: 6px; }
+    .arts_list{ display: flex; flex-direction: column; gap: 8px; }
+
     .art-row{
         display: flex;
         align-items: center;
-        gap: 10px;
-        padding: 6px;
-        border: none;
-        border-radius: 6px;
-        background-color: rgb(195,195,195);
-        cursor: pointer;
-        text-align: left;
+        gap: 12px;
+        padding: 8px 10px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        background-color: rgba(255, 255, 255, 0.07);
+        color: inherit;
         font: inherit;
+        text-align: left;
+        cursor: pointer;
+        transition: background-color 0.15s ease, transform 0.1s ease;
+
+        &:hover{ background-color: rgba(255, 255, 255, 0.14); transform: translateY(-1px); }
 
         .art-thumb{
-            width: 50px; height: 50px; flex: 0 0 50px;
-            border: solid black 2px; box-sizing: border-box; overflow: hidden;
+            flex: 0 0 52px;
+            width: 52px;
+            height: 52px;
+            border-radius: 10px;
+            overflow: hidden;
+            background-color: rgba(255, 255, 255, 0.1);
+
             img, video{ width: 100%; height: 100%; object-fit: cover; display: block; }
         }
-        .art-tag{ flex: 1; font-size: 20px; }
-        .art-info{ display: flex; flex-direction: column; align-items: flex-end; }
-        .art-number{ font-weight: bold; }
+
+        .art-tag{ flex: 1; font-size: 18px; color: #a9d76a; }
+        .art-info{ display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+        .art-number{ font-size: 16px; }
     }
 
+    /* статус-«таблетка» (в списке и в просмотре) */
     .art-status{
-        font-size: 14px;
-        &.pending{ color: #8a6d00; }
-        &.accepted, &.published{ color: #1f6f1f; }
-        &.rejected, &.canceled, &.failed{ color: #b3261e; }
+        align-self: center;
+        padding: 2px 10px;
+        border-radius: 999px;
+        background-color: rgba(255, 255, 255, 0.12);
+        font-size: 12px;
+
+        &.pending{ background-color: rgba(230, 180, 40, 0.25); color: #f1cf6a; }
+        &.accepted, &.published, &.publishing{ background-color: rgba(117, 171, 49, 0.28); color: #b6e07a; }
+        &.rejected, &.canceled, &.failed{ background-color: rgba(229, 83, 75, 0.25); color: #ff9a94; }
     }
 
     /* просмотр заявки */
-    .art-detail{ display: flex; flex-direction: column; gap: 8px; }
-    .form-title{ margin: 0; text-align: center; }
-    .art-line{ margin: 0; }
-    .art-author, input[type=datetime-local]{
-        padding: 6px 8px;
-        border-radius: 10px;
-        border: solid black 2px;
-        font: inherit;
-    }
-    .accept-box{ flex-basis: 100%; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .art-detail{ display: flex; flex-direction: column; gap: 10px; }
+    .art-line{ margin: 0; b{ color: var(--ui-muted); font-weight: 600; } }
 
-    .art-actions{ display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; }
-    .arts-back, .arts-save, .arts-delete, .arts-accept, .arts-reject, .arts-action{
-        padding: 8px 14px;
-        border-radius: 10px;
-        border: solid black 2px;
-        color: white;
-        cursor: pointer;
+    .art-author, input[type=datetime-local]{
+        padding: 9px 12px;
+        border: 1px solid var(--ui-line);
+        border-radius: 12px;
+        background-color: var(--ui-field);
+        color: var(--ui-text);
+        color-scheme: dark;
         font: inherit;
+        outline: none;
+
+        &:focus{ border-color: #75ab31; box-shadow: 0 0 0 3px rgba(117, 171, 49, 0.25); }
+        &::placeholder{ color: var(--ui-muted); }
     }
-    .arts-back{ background-color: #6ca9db; }
-    .arts-save, .arts-accept, .arts-action{ background-color: #2f7d1f; }
-    .arts-delete, .arts-reject{ background-color: #b3261e; }
+
+    .accept-box{ display: flex; flex-basis: 100%; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+    .art-actions{ display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
+
+    .arts-back, .arts-save, .arts-delete, .arts-accept, .arts-reject, .arts-action{
+        padding: 10px 18px;
+        border: none;
+        border-radius: 12px;
+        color: white;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+        transition: filter 0.15s ease, transform 0.1s ease;
+
+        &:hover{ filter: brightness(1.12); }
+        &:active{ transform: scale(0.98); }
+        &:disabled{ opacity: 0.55; cursor: default; filter: none; }
+    }
+
+    .arts-back{ background-color: rgba(255, 255, 255, 0.16); }
+    .arts-save, .arts-accept, .arts-action{ background-color: #4f9a2a; }
+    .arts-delete, .arts-reject{ background-color: #c0392b; }
+    .arts-action{ width: 100%; }
 }
 
 /* ---------- Просмотр медиа на весь экран ---------- */
@@ -1100,7 +1182,7 @@ footer{
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: rgba(0,0,0,0.85);
+    background-color: rgba(0, 0, 0, 0.88);
 
-    img, video{ max-width: 95vw; max-height: 90vh; }
+    img, video{ max-width: 95vw; max-height: 90vh; border-radius: 8px; }
 }
